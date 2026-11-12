@@ -1,0 +1,2679 @@
+<title>Mission Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="fonts.css">
+<style>
+/* Layout: a day-stamped header, then a pencil-sketched town map beside a paper mission list; the Notes view swaps both for a cork board of sticky notes. */
+:root {
+  --map-bg: #d6d7c0;
+  --paper: #e9e9da;
+  --ink: #2a2c25;
+  --ink-soft: #62665a;
+  --red: #c4382b;
+  --water: #9db4bb;
+  --board: #b48a5c;
+  --board-dot: #9c744a;
+  --note-y: #f6e27a;
+  --note-p: #f4a9bb;
+  --note-b: #a3d5ec;
+  --note-g: #bde5a4;
+  --note-ink: #2a2a22;
+  --on-red: #fff8f0;
+  --font-hand: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+  --font-type: "Special Elite", "Courier New", Courier, monospace;
+  --bg: var(--map-bg);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --map-bg: #1f221d; --paper: #2a2d26; --ink: #dcdacb; --ink-soft: #9b9c8c;
+    --red: #ec6a5b; --water: #36505a; --board: #3a2c21; --board-dot: #2e2219;
+    --on-red: #1c1a16; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --map-bg: #1f221d; --paper: #2a2d26; --ink: #dcdacb; --ink-soft: #9b9c8c;
+  --red: #ec6a5b; --water: #36505a; --board: #3a2c21; --board-dot: #2e2219;
+  --on-red: #1c1a16; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-type); font-size: 15px; line-height: 1.4;
+  padding-block: 18px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  min-height: 100%;
+}
+body[data-view="notes"] {
+  --bg: var(--board);
+  background-image: radial-gradient(var(--board-dot) 1.2px, transparent 1.6px);
+  background-size: 11px 11px;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 16px; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px dashed var(--red); outline-offset: 2px; }
+
+/* header */
+.head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.stamp {
+  display: inline-block; border: 3px solid var(--red); color: var(--red);
+  padding: 2px 10px; letter-spacing: .18em; text-transform: uppercase;
+  font-size: 22px; transform: rotate(-2deg); background: transparent;
+}
+body[data-view="notes"] .stamp { background: var(--paper); color: var(--red); }
+.count { font-family: var(--font-hand); font-size: 26px; font-weight: 700; margin-top: 4px; }
+body[data-view="notes"] .count { background: var(--paper); display: inline-block; padding: 0 8px; transform: rotate(1deg); }
+.seg { display: flex; border: 2px solid var(--ink); background: var(--paper); }
+.seg button { border: 0; background: transparent; padding: 7px 14px; letter-spacing: .06em; min-height: 40px; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+/* add bar */
+.add { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
+.add > * { min-width: 0; }
+.add input, .add select {
+  background: var(--paper); color: var(--ink); border: 2px solid var(--ink); padding: 9px 10px; min-height: 44px; border-radius: 0;
+}
+.add input::placeholder { color: var(--ink-soft); }
+.btn { border: 2px solid var(--ink); background: var(--ink); color: var(--paper); padding: 9px 14px; min-height: 44px; letter-spacing: .05em; }
+.btn.ghost { background: var(--paper); color: var(--ink); }
+@media (max-width: 520px) {
+  .add { grid-template-columns: 1fr 1fr; }
+  .add input { grid-column: 1 / -1; }
+}
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* suggestions */
+.suggest { background: var(--paper); color: var(--ink); border: 2px dashed var(--ink); padding: 12px; display: grid; gap: 8px; }
+.suggest h2 { margin: 0; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; font-weight: 400; }
+.sug { display: flex; align-items: center; gap: 10px; justify-content: space-between; border-top: 1px solid var(--ink-soft); padding-top: 8px; }
+.sug span { min-width: 0; }
+.sug .hand { font-family: var(--font-hand); font-size: 23px; line-height: 1.1; font-weight: 500; }
+.sug small, .tag { display: block; color: var(--ink-soft); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+
+/* layout */
+.layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 860px) { body[data-view="map"] .layout { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); } }
+.mapcard { border: 3px solid var(--ink); background: var(--map-bg); position: relative; }
+.mapcard svg { display: block; width: 100%; height: auto; }
+.mapcard .hint { position: absolute; right: 8px; top: 6px; font-size: 11px; color: var(--ink-soft); letter-spacing: .06em; }
+.filter { display: flex; align-items: center; gap: 8px; }
+.chip { border: 2px solid var(--red); background: transparent; color: var(--red); padding: 2px 10px; min-height: 32px; }
+
+/* map drawing */
+.rd-o { fill: none; stroke: var(--ink); stroke-width: 11; stroke-linecap: round; }
+.rd-i { fill: none; stroke: var(--map-bg); stroke-width: 8; stroke-linecap: round; }
+.river { fill: none; stroke: var(--water); stroke-width: 13; stroke-linecap: round; }
+.wave { fill: none; stroke: var(--ink-soft); stroke-width: 1.2; stroke-linecap: round; }
+.ico { fill: var(--map-bg); stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.plabel { font-family: var(--font-hand); font-size: 17px; font-weight: 700; fill: var(--ink); text-anchor: middle; }
+.maptitle { font-family: var(--font-type); font-size: 12px; letter-spacing: .2em; fill: var(--ink-soft); }
+.place { cursor: pointer; }
+.place .ring { fill: none; stroke: var(--red); stroke-width: 2; stroke-dasharray: 4 4; opacity: 0; }
+.place.sel .ring { opacity: 1; }
+.place:focus-visible { outline: none; }
+.place:focus-visible .ring { opacity: 1; }
+.bdg { fill: var(--red); }
+.bdgt { fill: var(--on-red); font-family: var(--font-type); font-size: 12px; text-anchor: middle; }
+.bdgx { fill: var(--map-bg); stroke: var(--ink); stroke-width: 1.5; }
+.bdgm { stroke: var(--red); stroke-width: 2.4; stroke-linecap: round; fill: none; }
+
+/* list: paper */
+.paper { background: var(--paper); color: var(--ink); border: 2px solid var(--ink); padding: 8px 14px 14px; }
+.paper h2 { font-weight: 400; font-size: 14px; letter-spacing: .14em; text-transform: uppercase; margin: 6px 0 4px; }
+ul.missions { list-style: none; margin: 0; padding: 0; }
+.item { display: flex; align-items: stretch; }
+.paper .item { border-bottom: 1px solid var(--ink-soft); }
+.row { flex: 1; min-width: 0; display: flex; gap: 12px; align-items: center; text-align: left; background: transparent; border: 0; padding: 9px 0; min-height: 48px; }
+.box { flex: none; width: 24px; height: 24px; border: 2px solid var(--ink); position: relative; }
+.box svg { position: absolute; inset: -3px; width: 28px; height: 28px; opacity: 0; transition: opacity .15s; }
+.box path { stroke: var(--red); stroke-width: 3; stroke-linecap: round; fill: none; }
+.done .box svg { opacity: 1; }
+.txtwrap { min-width: 0; }
+.t { display: inline-block; position: relative; font-family: var(--font-hand); font-size: 25px; line-height: 1.1; font-weight: 500; overflow-wrap: anywhere; }
+.t::after {
+  content: ""; position: absolute; left: -3px; right: -3px; top: 50%; height: 10px; margin-top: -5px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M0 6 C12 2 26 9 42 5 S72 2 100 4.5' fill='none' stroke='%23d6392b' stroke-width='2.6' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  transform: scaleX(0); transform-origin: left center; transition: transform .35s ease-out;
+}
+.struck .t::after { transform: scaleX(1); }
+.done .t { opacity: .72; }
+.del { flex: none; width: 44px; border: 0; background: transparent; color: var(--ink-soft); font-size: 22px; }
+.del:hover { color: var(--red); }
+.empty { font-family: var(--font-hand); font-size: 24px; padding: 14px 0 6px; color: var(--ink-soft); }
+.sample { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; font-size: 12px; color: var(--ink-soft); padding-top: 10px; }
+.sample button { border: 0; background: none; text-decoration: underline; color: var(--ink); padding: 6px 0; }
+
+/* notes */
+ul.notes { list-style: none; margin: 0; padding: 4px 0; display: grid; gap: 22px 16px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.note { position: relative; background: var(--note-y); color: var(--note-ink); aspect-ratio: 1 / 1; box-shadow: 2px 5px 9px rgba(0,0,0,.28); padding: 18px 10px 8px 12px; transform: rotate(var(--rot, 0deg)); transition: transform .2s; }
+.note:hover { transform: rotate(0deg) scale(1.03); }
+.note::before { content: ""; position: absolute; top: -8px; left: 50%; width: 56px; height: 16px; margin-left: -28px; background: rgba(255,255,255,.45); transform: rotate(-2deg); }
+.note:nth-child(4n+1) { --rot: -2.2deg; }
+.note:nth-child(4n+2) { --rot: 1.6deg; background: var(--note-p); }
+.note:nth-child(4n+3) { --rot: -1deg; background: var(--note-b); }
+.note:nth-child(4n+4) { --rot: 2.4deg; background: var(--note-g); }
+.note .item { height: 100%; flex-direction: row; }
+.note .row { align-items: flex-start; padding: 0; min-height: 0; height: 100%; flex-direction: column; justify-content: space-between; gap: 6px; }
+.note .box { display: none; }
+.note .t { font-size: 27px; color: var(--note-ink); }
+.note .tag { color: #4d4d3c; }
+.note .del { position: absolute; top: 2px; right: 0; width: 36px; height: 36px; color: #4d4d3c; font-size: 20px; }
+.note.done { filter: saturate(.8); }
+
+a.btn, label.btn { display: inline-flex; align-items: center; text-decoration: none; }
+.add .where { grid-column: 1 / -1; }
+.wh { display: block; color: var(--ink-soft); font-size: 12px; overflow-wrap: anywhere; }
+.note .wh { color: #4d4d3c; }
+.go { flex: none; display: flex; align-items: center; justify-content: center; min-width: 48px; padding: 0 6px; color: var(--ink); font-size: 12px; letter-spacing: .06em; text-decoration: underline; }
+.note .go { position: absolute; right: 2px; bottom: 4px; height: 40px; color: #3b3b2c; }
+.note .tag { padding-right: 40px; }
+.suggest textarea { width: 100%; min-height: 110px; resize: vertical; background: var(--map-bg); color: var(--ink); border: 2px solid var(--ink); border-radius: 0; padding: 8px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+.suggest label.chk { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.msg { font-size: 13px; color: var(--ink-soft); min-height: 1.2em; }
+body[data-view="errands"] .suggest textarea { background: #efe7c8; border-color: #000; }
+.foot { font-size: 12px; color: var(--ink-soft); }
+body[data-view="notes"] .foot { color: #fff8ea; }
+[data-theme="light"] body[data-view="notes"] .foot { color: #fff8ea; }
+/* errands: grimy yellow notepad on a dark desk, black marker lines */
+body[data-view="errands"] {
+  --bg: #15110d; --paper: #d6cba3; --ink: #1c1a15; --ink-soft: #5b543f; --red: #cf2b1e; --on-red: #fff3e0;
+  color: #e6dcbc; color-scheme: light;
+  background-image: radial-gradient(ellipse at 50% 20%, #2b231b 0%, #15110d 55%, #0b0907 100%);
+  background-size: auto; background-attachment: fixed;
+}
+body[data-view="errands"] .stamp { background: transparent; color: var(--red); border-color: var(--red); }
+body[data-view="errands"] .seg { border-color: #e6dcbc; background: transparent; }
+body[data-view="errands"] .seg button[aria-pressed="true"] { background: #e6dcbc; color: #15110d; }
+body[data-view="errands"] .btn { background: var(--red); border-color: #000; color: var(--on-red); }
+body[data-view="errands"] .btn.ghost { background: var(--paper); border-color: #000; color: var(--ink); }
+body[data-view="errands"] .add input, body[data-view="errands"] .add select { border-color: #000; }
+body[data-view="errands"] .foot { color: #a89d7d; }
+body[data-view="errands"] .layout { max-width: 640px; width: 100%; margin: 0 auto; }
+body[data-view="errands"] #listSec { filter: drop-shadow(0 8px 10px rgba(0,0,0,.6)); transform: rotate(-.6deg); }
+body[data-view="errands"] .paper {
+  border: 0; padding: 22px 16px 22px 56px; position: relative;
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(circle at 84% 9%, transparent 0 26px, rgba(110,70,25,.28) 27px 31px, transparent 33px),
+    linear-gradient(90deg, transparent 44px, rgba(190,35,25,.55) 44px 46px, transparent 46px),
+    linear-gradient(180deg, rgba(120,95,40,.16), transparent 18%, transparent 80%, rgba(120,95,40,.22));
+  clip-path: polygon(0 7px, 4% 0, 9% 6px, 14% 1px, 20% 7px, 26% 0, 33% 5px, 40% 1px, 47% 7px, 54% 0, 61% 5px, 68% 1px, 75% 7px, 82% 0, 89% 5px, 95% 1px, 100% 6px, 100% calc(100% - 6px), 95% 100%, 88% calc(100% - 5px), 80% 100%, 71% calc(100% - 6px), 62% 100%, 53% calc(100% - 5px), 44% 100%, 35% calc(100% - 6px), 26% 100%, 17% calc(100% - 5px), 8% 100%, 0 calc(100% - 6px));
+}
+body[data-view="errands"] .paper h2 { font-size: 30px; letter-spacing: .12em; border-bottom: 4px double var(--ink); padding-bottom: 6px; margin: 0 0 4px; }
+body[data-view="errands"] .paper .item { border-bottom: 1px solid rgba(60,50,30,.35); }
+body[data-view="errands"] .t { font-family: "Permanent Marker", var(--font-hand); font-size: 22px; letter-spacing: .01em; }
+body[data-view="errands"] .tag { font-size: 11px; letter-spacing: .14em; }
+body[data-view="errands"] .box { border-color: var(--ink); border-width: 3px; }
+body[data-view="errands"] .t::after {
+  height: 12px; margin-top: -6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M0 5 C14 3 30 7 48 4.5 S80 5.5 100 4' fill='none' stroke='%231c1a15' stroke-width='4' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+}
+body[data-view="errands"] .done .t { opacity: .8; }
+body[data-view="errands"] .del { color: #5b543f; }
+body[data-view="errands"] .empty { font-family: "Permanent Marker", var(--font-hand); font-size: 20px; }
+/* options menu and animation switches */
+.opts details { border-top: 1px solid var(--ink-soft); padding: 4px 0; }
+.opts summary { cursor: pointer; letter-spacing: .1em; text-transform: uppercase; font-size: 13px; min-height: 40px; display: flex; align-items: center; }
+.grp { display: grid; gap: 10px; padding: 4px 0 8px; }
+.suggest .seg button { color: var(--ink); }
+.suggest .seg button[aria-pressed="true"] { color: var(--paper); }
+body[data-view="errands"] .suggest .seg { border-color: #1c1a15; background: transparent; }
+body[data-view="errands"] .suggest .seg button[aria-pressed="true"] { background: #1c1a15; color: #d6cba3; }
+.scr-host { position: relative; }
+.scr { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+.scr path { fill: none; stroke: var(--red); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: scr .35s ease-out forwards, scrf .3s .5s forwards; }
+@keyframes scr { to { stroke-dashoffset: 0; } }
+@keyframes scrf { to { opacity: 0; } }
+body.no-strike .t::after, body.calm .t::after { transition: none; }
+body.flat .note, body.flat .note:hover { transform: none; transition: none; }
+body.calm *, body.calm *::before, body.calm *::after { transition: none !important; animation: none !important; }
+body.hide-tags .tag { display: none; }
+.bottom { display: grid; gap: 12px; }
+.filebtn input { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 0; }
+.btn, .chip { position: relative; }
+body.wob .btn, body.wob .chip { border-color: transparent !important; }
+.wobs { position: absolute; left: -4px; top: -4px; pointer-events: none; overflow: visible; }
+.wobs path { fill: none; stroke: var(--wob, var(--ink)); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.chip { --wob: var(--red); }
+body[data-view="errands"] .btn { --wob: #000; }
+@media (prefers-reduced-motion: reduce) { .t::after, .note { transition: none; } .scr path { animation: none; stroke-dashoffset: 0; } }
+
+[hidden] { display: none !important; }
+/* ===== v2: pin, meters, week, road, race, toast ===== */
+.wrap { position: relative; z-index: 1; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.pinbtn { background: none; border: 0; padding: 0; width: 44px; height: 60px; flex: none; perspective: 500px; transform-origin: 50% 8%; animation: sway 5s ease-in-out infinite; cursor: pointer; }
+@keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+.pin3d { display: block; position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.3, 1.35, .5, 1); }
+.pinbtn[aria-pressed="true"] .pin3d { transform: rotateY(180deg); }
+.pin3d .face { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.pin3d .back { transform: rotateY(180deg); }
+.pin3d svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .28)); }
+
+.meters { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.stress { display: flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+.stress .meter { width: 116px; height: 12px; border: 2px solid var(--ink); background: var(--paper); position: relative; overflow: hidden; }
+.stress .meter i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(90deg, #6aa84f, #e6b422 55%, #d6392b) 0 0 / 116px 100% no-repeat; transition: width .5s; }
+.stress b { font-weight: 400; min-width: 6em; }
+.rankbox { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; border: 2px solid var(--ink); padding: 3px 8px; background: var(--paper); color: var(--ink); }
+.adbox { flex-basis: 100%; font-size: 12px; color: var(--ink-soft); letter-spacing: .05em; }
+
+.themegrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.tbtn { border: 2px solid var(--ink); background: transparent; color: var(--ink); padding: 8px 6px; min-height: 44px; letter-spacing: .05em; }
+.tbtn[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.opts select { background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: 0; padding: 8px; min-height: 40px; }
+.achs { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.achs li { display: flex; gap: 8px; align-items: baseline; font-size: 13px; }
+.achs li b { font-weight: 400; }
+.achs li small { color: var(--ink-soft); }
+.achs li.lock { opacity: .55; }
+.achs li::before { content: "\2605"; color: var(--red); }
+.achs li.lock::before { content: "\2606"; color: var(--ink-soft); }
+
+.week { display: grid; gap: 8px; }
+.days { display: flex; flex-wrap: wrap; gap: 6px; }
+.daybtn { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 4px 8px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); font-size: 12px; letter-spacing: .06em; }
+.daybtn b { font-weight: 400; font-size: 16px; line-height: 1.1; }
+.daybtn.today { box-shadow: inset 0 -4px 0 var(--red); }
+.daybtn[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.daybtn.wrapbtn { margin-left: auto; }
+.daybtn.hot { border-color: var(--red); color: var(--red); }
+.daybtn.hot[aria-pressed="true"] { background: var(--red); color: var(--on-red); }
+.bars { display: flex; gap: 8px; align-items: flex-end; height: 104px; }
+.bc { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; font-size: 11px; gap: 2px; }
+.bc i { display: block; width: 100%; background: var(--red); min-height: 2px; }
+.bc em { font-style: normal; }
+.wrapline { font-size: 13px; }
+
+.road { position: relative; height: 64px; }
+.lane { position: absolute; left: 0; right: 0; top: 30px; height: 14px; background: #2d2d38; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
+.lane::after { content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 2px; background: repeating-linear-gradient(90deg, #f2d64b 0 14px, transparent 14px 26px); }
+.cp { position: absolute; top: 20px; width: 18px; height: 32px; margin-left: -1px; display: block; }
+.cp::before { content: ""; position: absolute; left: 0; top: 0; width: 2px; height: 32px; background: var(--ink-soft); }
+.cp::after { content: ""; position: absolute; left: 2px; top: 0; width: 12px; height: 9px; background: var(--paper); border: 1px solid var(--ink); }
+.cp.done::after { background: var(--red); }
+.bike { position: absolute; top: 1px; width: 44px; height: 30px; margin-left: -22px; transition: left .7s cubic-bezier(.4, 1.3, .6, 1); pointer-events: none; color: var(--ink); }
+.bike svg { display: block; width: 100%; height: 100%; }
+.roadnote { position: absolute; right: 0; top: 0; font-size: 11px; color: var(--ink-soft); letter-spacing: .06em; }
+
+.timer { font-size: 34px; letter-spacing: .08em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.timer.low { color: var(--red); }
+.toast { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 420px; margin: 0 auto; padding: 10px 14px; background: var(--ink); color: var(--paper); border: 2px solid var(--red); z-index: 50; text-align: center; font-size: 14px; }
+
+.xtra { display: block; color: var(--ink-soft); font-size: 12px; overflow-wrap: anywhere; }
+.xtra.hs { font-style: italic; }
+.note .xtra { color: #4d4d3c; }
+.item.evil .t { letter-spacing: .02em; }
+.add .bring { grid-column: 1 / -1; }
+
+/* map extras: fog, pins, traffic, sky */
+.place .fog { opacity: 0; transition: opacity 1.2s; pointer-events: none; }
+.place.fogged .fog { opacity: 1; }
+.fog ellipse { fill: var(--map-bg); fill-opacity: .93; }
+.place.fogged .plabel { fill: var(--ink-soft); }
+.pin .plabel { font-size: 15px; }
+.mapbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px; border-top: 2px solid var(--ink); background: var(--paper); color: var(--ink); font-size: 12px; }
+.pinform { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px; border-top: 2px dashed var(--ink); background: var(--paper); color: var(--ink); }
+.pinform input { flex: 1; min-width: 0; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: 0; padding: 8px; min-height: 44px; }
+.mapcard.dropping svg { cursor: crosshair; }
+.temp { fill: none; stroke: var(--red); stroke-width: 2; stroke-dasharray: 3 3; }
+.car .cb { stroke: var(--ink); stroke-width: 1.2; }
+.sky { stroke: var(--ink); stroke-width: 1.2; }
+.filter { flex-wrap: wrap; }
+
+/* ===== themes ===== */
+@keyframes prt { from { max-height: 0; } to { max-height: 160px; } }
+@keyframes feed { from { transform: translateY(-100%); } to { transform: none; } }
+.item.printing { overflow: hidden; animation: prt .8s steps(8, end) both; }
+.item.printing .row { animation: feed .8s steps(8, end) both; }
+body.no-print .item.printing, body.no-print .item.printing .row { animation: none; }
+
+/* racer: late-night arcade dusk */
+body[data-view="racer"] {
+  --bg: #120826; --paper: #1c0f3d; --ink: #f3eaff; --ink-soft: #a898d8; --red: #ff4f8b; --on-red: #17082e;
+  --map-bg: #1c0f3d; --water: #3b1f7a;
+  --font-type: "VT323", "Courier New", monospace; --font-hand: "VT323", "Courier New", monospace;
+  color: #f3eaff; color-scheme: dark;
+  background-color: #120826; background-image: linear-gradient(#120826 0, #2a1054 55%, #5b1b6e 82%, #120826 100%); background-attachment: fixed;
+  font-size: 18px;
+}
+body[data-view="racer"]::before {
+  content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 34vh; pointer-events: none; z-index: 0; opacity: .5;
+  background: repeating-linear-gradient(90deg, rgba(0, 229, 255, .35) 0 2px, transparent 2px 46px), repeating-linear-gradient(0deg, rgba(255, 79, 139, .35) 0 2px, transparent 2px 26px);
+  transform: perspective(220px) rotateX(58deg); transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(transparent, #000 70%); mask-image: linear-gradient(transparent, #000 70%);
+}
+body[data-view="racer"] .stamp { font-family: "Press Start 2P", "Courier New", monospace; font-size: 14px; border: 0; padding: 0; transform: none; color: #f3eaff; letter-spacing: .08em; }
+body[data-view="racer"] .stamp::after { content: ""; display: block; height: 8px; margin-top: 6px; background: conic-gradient(#f3eaff 25%, #120826 0 50%, #f3eaff 0 75%, #120826 0) 0 0 / 8px 8px; }
+body[data-view="racer"] .count { font-size: 28px; color: #00e5ff; }
+body[data-view="racer"] .layout { max-width: 700px; width: 100%; margin: 0 auto; }
+body[data-view="racer"] .paper { border: 3px solid #00e5ff; box-shadow: 5px 5px 0 #ff4f8b; }
+body[data-view="racer"] .paper h2 { font-family: "Press Start 2P", monospace; font-size: 12px; color: #ff4f8b; }
+body[data-view="racer"] .t { font-size: 24px; }
+body[data-view="racer"] .btn { background: #ff4f8b; color: #17082e; border-color: #00e5ff; font-family: "Press Start 2P", monospace; font-size: 10px; --wob: #00e5ff; }
+body[data-view="racer"] .btn.ghost { background: #1c0f3d; color: #00e5ff; }
+body[data-view="racer"] .t::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M0 5 L100 5' fill='none' stroke='%2300e5ff' stroke-width='4' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"); }
+body[data-view="racer"] .wrap::after { content: ""; display: none; }
+
+/* zine: photocopy, tape and ransom letters */
+body[data-view="zine"] {
+  --bg: #e7e4db; --paper: #f6f3ea; --ink: #111; --ink-soft: #4b4a45; --red: #d94a38; --on-red: #f6f3ea; --map-bg: #e1ddd0; --water: #c3cdd0;
+  --font-hand: "Special Elite", "Courier New", monospace;
+  color: #111; color-scheme: light;
+  background: radial-gradient(rgba(0, 0, 0, .2) 1px, transparent 1.5px) 0 0 / 6px 6px, #e7e4db;
+}
+body[data-view="zine"] .layout { max-width: 700px; width: 100%; margin: 0 auto; }
+body[data-view="zine"] .paper { position: relative; border: 3px solid #111; box-shadow: 6px 6px 0 #111; transform: rotate(-.5deg); }
+body[data-view="zine"] .paper::before { content: ""; position: absolute; top: -12px; left: 28%; width: 96px; height: 24px; background: rgba(232, 212, 77, .75); transform: rotate(-4deg); }
+body[data-view="zine"] .paper h2 { display: inline-block; background: #111; color: #f6f3ea; font-family: Anton, Impact, sans-serif; font-size: 20px; letter-spacing: .1em; padding: 2px 10px; font-weight: 400; }
+body[data-view="zine"] .stamp { font-family: Anton, Impact, sans-serif; letter-spacing: .12em; background: #111; color: #f6f3ea; border: 0; font-weight: 400; }
+body[data-view="zine"] .t { font-size: 22px; line-height: 1.5; }
+.rw { display: inline-block; white-space: nowrap; }
+.rl { display: inline-block; padding: 0 .08em; margin: 0 .02em; line-height: 1.1; }
+.rl.r0 { background: #111; color: #f6f3ea; font-family: Anton, Impact, sans-serif; }
+.rl.r1 { background: #e8d44d; color: #111; font-family: "Playfair Display", Georgia, serif; font-weight: 900; }
+.rl.r2 { background: #f6f3ea; color: #111; font-family: "Special Elite", monospace; box-shadow: 0 0 0 1px #111; }
+.rl.r3 { background: #d94a38; color: #f6f3ea; font-family: Bangers, Impact, sans-serif; transform: rotate(-3deg); }
+.rl.r4 { background: #111; color: #e8d44d; font-family: "Playfair Display", Georgia, serif; font-weight: 900; transform: rotate(2deg); }
+
+/* wanted: posters nailed to old planks */
+body[data-view="wanted"] {
+  --bg: #3b2a1d; --paper: #dcc79b; --ink: #3a2410; --ink-soft: #6b4a24; --red: #a3261a; --on-red: #f3e4bd; --map-bg: #d5c08f; --water: #9fb0a0;
+  --font-hand: "Special Elite", "Courier New", monospace;
+  color: #f0e1bd; color-scheme: dark;
+  background: repeating-linear-gradient(90deg, #4a3524 0 96px, #2f2117 96px 98px) #3b2a1d;
+}
+body[data-view="wanted"] .stamp { font-family: Rye, Georgia, serif; font-weight: 400; background: #dcc79b; color: #5a2a10; border-color: #5a2a10; }
+body[data-view="wanted"] .count { background: #dcc79b; color: #3a2410; display: inline-block; padding: 0 8px; }
+body[data-view="wanted"] ul.notes { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
+body[data-view="wanted"] .note { aspect-ratio: auto; min-height: 190px; background: #dcc79b !important; color: #3a2410; border: 1px solid #6b4a24; padding: 40px 12px 30px; text-align: center; box-shadow: 3px 6px 10px rgba(0, 0, 0, .5); }
+body[data-view="wanted"] .note::before { content: "WANTED"; top: 8px; left: 0; right: 0; margin: 0; width: auto; height: auto; background: none; transform: none; font-family: Rye, Georgia, serif; font-size: 22px; letter-spacing: .12em; color: #5a2a10; }
+body[data-view="wanted"] .note::after { content: "REWARD $10"; position: absolute; bottom: 8px; left: 0; right: 0; font-family: Rye, Georgia, serif; font-size: 12px; color: #5a2a10; }
+body[data-view="wanted"] .note .row { align-items: center; text-align: center; justify-content: center; }
+body[data-view="wanted"] .note .t { font-size: 24px; color: #3a2410; }
+body[data-view="wanted"] .note.done .row::after { content: "CAUGHT"; position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%) rotate(-14deg); border: 3px solid #a3261a; color: #a3261a; font-family: Rye, Georgia, serif; font-size: 22px; padding: 0 8px; opacity: .85; pointer-events: none; }
+body[data-view="wanted"] .foot { color: #f0e1bd; }
+body[data-view="wanted"] .note.done .t { opacity: .4; }
+
+/* receipt: thermal paper */
+body[data-view="receipt"] {
+  --bg: #2a2d33; --paper: #f6f3ea; --ink: #1d1d1b; --ink-soft: #5f5d55; --red: #1d1d1b; --on-red: #f6f3ea; --map-bg: #e7e3d6; --water: #c5ccc8;
+  --font-type: "Share Tech Mono", "Courier New", monospace; --font-hand: "Share Tech Mono", "Courier New", monospace;
+  color: #d8d6cf; color-scheme: light; background: #2a2d33;
+}
+body[data-view="receipt"] .layout { max-width: 380px; width: 100%; margin: 0 auto; }
+body[data-view="receipt"] .stamp { border-color: #d8d6cf; color: #d8d6cf; font-size: 18px; }
+body[data-view="receipt"] .count { font-size: 22px; }
+body[data-view="receipt"] #listSec::before { content: ""; display: block; height: 12px; margin: 0 -8px; background: #101012; border-radius: 6px; box-shadow: inset 0 -3px 0 #3a3d44, 0 3px 6px rgba(0, 0, 0, .5); }
+body[data-view="receipt"] .paper { position: relative; border: 0; padding: 14px 16px 18px; margin: 0 0 16px; box-shadow: 0 8px 14px rgba(0, 0, 0, .4); }
+body[data-view="receipt"] .paper::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 8px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M0 0L6 8L12 0Z' fill='%23f6f3ea'/%3E%3C/svg%3E") repeat-x left top; }
+body[data-view="receipt"] .paper h2 { text-align: center; font-size: 20px; letter-spacing: .22em; margin: 2px 0; }
+body[data-view="receipt"] .paper .item { border-bottom: 0; }
+body[data-view="receipt"] .box { display: none; }
+body[data-view="receipt"] .row { padding: 5px 0; min-height: 34px; gap: 6px; }
+body[data-view="receipt"] .txtwrap { display: grid; grid-template-columns: auto 1fr auto; column-gap: 8px; width: 100%; }
+body[data-view="receipt"] .txtwrap::before { content: "1x"; grid-column: 1; align-self: baseline; }
+body[data-view="receipt"] .t { grid-column: 2; font-size: 17px; text-transform: uppercase; letter-spacing: .03em; }
+body[data-view="receipt"] .tag { grid-column: 3; text-align: right; align-self: baseline; font-size: 11px; }
+body[data-view="receipt"] .xtra { grid-column: 2 / -1; }
+body[data-view="receipt"] .t::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M0 5 L100 5' fill='none' stroke='%231d1d1b' stroke-width='4' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"); }
+body[data-view="receipt"] .go { min-width: 40px; }
+.rc-head, .rc-foot { display: none; }
+body[data-view="receipt"] .rc-head, body[data-view="receipt"] .rc-foot { display: block; text-align: center; text-transform: uppercase; letter-spacing: .14em; font-size: 12px; color: var(--ink-soft); }
+.dash { border-top: 2px dashed var(--ink-soft); margin: 8px 0; }
+.rc-sum { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink); letter-spacing: .06em; }
+.rc-bar { height: 34px; margin: 10px 8px 6px; background: repeating-linear-gradient(90deg, #1d1d1b 0 2px, transparent 2px 4px, #1d1d1b 4px 5px, transparent 5px 9px, #1d1d1b 9px 12px, transparent 12px 14px); }
+
+/* comic: halftone and panels */
+body[data-view="comic"] {
+  --bg: #ffe45e; --paper: #fff; --ink: #111; --ink-soft: #444; --red: #e3261b; --on-red: #fff; --map-bg: #fff3b0; --water: #8fd0f0;
+  --font-hand: Bangers, "Comic Sans MS", Impact, sans-serif; --font-type: "Comic Neue", "Comic Sans MS", sans-serif;
+  color: #111; color-scheme: light;
+  background: radial-gradient(#e0a800 1.4px, transparent 1.9px) 0 0 / 9px 9px, #ffe45e;
+}
+body[data-view="comic"] .layout { max-width: 700px; width: 100%; margin: 0 auto; }
+body[data-view="comic"] .stamp { font-family: Bangers, Impact, sans-serif; font-weight: 400; background: #e3261b; color: #fff; border: 3px solid #111; font-size: 26px; letter-spacing: .08em; }
+body[data-view="comic"] .count { font-weight: 400; font-size: 30px; }
+body[data-view="comic"] .paper { border: 4px solid #111; box-shadow: 6px 6px 0 #111; }
+body[data-view="comic"] .paper h2 { font-family: Bangers, Impact, sans-serif; font-weight: 400; font-size: 30px; letter-spacing: .06em; background: #e3261b; color: #fff; display: inline-block; padding: 0 12px; transform: rotate(-2deg); border: 3px solid #111; text-transform: none; }
+body[data-view="comic"] .paper .item { position: relative; border: 3px solid #111; margin: 10px 0; padding: 0 8px; background: #fff; box-shadow: 3px 3px 0 #111; }
+body[data-view="comic"] .t { font-size: 28px; letter-spacing: .04em; }
+body[data-view="comic"] .paper .item.done::after { content: "DONE!"; position: absolute; right: 56px; top: 50%; transform: translateY(-50%) rotate(-8deg); font-family: Bangers, Impact, sans-serif; font-size: 30px; color: #e3261b; -webkit-text-stroke: 1.5px #111; pointer-events: none; }
+body[data-view="comic"] .btn { background: #111; color: #ffe45e; border-color: #111; font-family: Bangers, Impact, sans-serif; font-size: 18px; letter-spacing: .06em; }
+body[data-view="comic"] .btn.ghost { background: #fff; color: #111; }
+
+/* alt mode: the red pin is showing */
+body.evil { --red: #ff3b2a; }
+body.evil::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; background: radial-gradient(ellipse at 50% 40%, transparent 45%, rgba(160, 0, 0, .3) 100%); }
+body.evil .stamp::after { content: " / NO"; }
+body[data-view="racer"].evil .stamp::after { content: ""; display: block; height: 8px; margin-top: 6px; background: conic-gradient(#f3eaff 25%, #120826 0 50%, #f3eaff 0 75%, #120826 0) 0 0 / 8px 8px; }
+body.evil .count { color: var(--red); }
+body.evil .item.evil .t { text-decoration: none; }
+@media (prefers-reduced-motion: reduce) { .pinbtn { animation: none; } .pin3d { transition: none; } .item.printing, .item.printing .row { animation: none; } .place .fog { transition: none; } .bike { transition: none; } }
+body.calm .pinbtn { animation: none; }
+
+/* ===== v3: own pictures and sounds ===== */
+.thumb { flex: none; width: 44px; height: 44px; border: 2px solid var(--ink); background: #fff; overflow: hidden; }
+.thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pic { flex: none; align-self: center; font-size: 12px; letter-spacing: .04em; padding: 6px 8px; border: 1px dashed var(--ink-soft); background: transparent; color: var(--ink-soft); cursor: pointer; position: relative; min-width: 40px; text-align: center; }
+.pic:hover { color: var(--red); border-color: var(--red); }
+.pic input { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 0; }
+.add .picpick { grid-column: 1 / -1; justify-self: start; }
+.slots { display: grid; gap: 6px; }
+.slot { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; }
+.slot .sn { font-size: 14px; }
+.slot .ss { grid-column: 1 / -1; font-size: 12px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.mh { font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; margin-top: 6px; }
+.pllist { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.pllist li { display: grid; grid-template-columns: 1fr auto auto auto; gap: 4px; align-items: center; font-size: 13px; }
+.pllist li.now .tn { font-weight: 700; }
+.pllist .tn { overflow-wrap: anywhere; }
+.pllist button { min-width: 36px; min-height: 36px; padding: 0 6px; }
+body.has-wall { background: none !important; }
+body.has-wall::before { content: ""; position: fixed; inset: 0; z-index: -2; background: var(--wall) center / cover no-repeat; }
+body.has-wall::after { content: ""; position: fixed; inset: 0; z-index: -1; background: var(--bg); opacity: .28; pointer-events: none; }
+.mapcard svg { background-size: cover; background-position: center; }
+.mapcard.no-sketch svg > g[filter] { display: none; }
+.pin3d .face img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0,0,0,.28)); }
+
+.cal { border: 2px solid var(--ink); background: var(--paper); padding: 8px; display: grid; gap: 8px; }
+.calhead { display: flex; align-items: center; gap: 6px; }
+.calttl { flex: 1; text-align: center; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; font-size: 14px; }
+.calgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.calwd { text-align: center; font-size: 11px; letter-spacing: .06em; color: var(--ink-soft); }
+.calday { position: relative; min-height: 46px; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 3px 5px; background: transparent; color: var(--ink); border: 1px solid var(--ink-soft); font-size: 12px; text-align: left; }
+.calday .dc { align-self: flex-end; font-size: 15px; font-weight: 400; line-height: 1; }
+.calday.today { box-shadow: inset 0 -4px 0 var(--red); }
+.calday.alldone { color: var(--ink-soft); }
+.calday.alldone .dn { text-decoration: line-through; }
+.calday.late .dc { color: var(--red); }
+.calday[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.calday[aria-pressed="true"].late .dc { color: inherit; }
+
+.wobAll { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; z-index: 30; }
+.wobAll path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+body.wob-all [data-wa] { border-color: transparent !important; }
+.cal { color: var(--ink); }
+
+/* ===== v4: events ===== */
+.calday .dr { display: flex; align-items: flex-end; justify-content: space-between; width: 100%; gap: 2px; }
+.calday .dots { display: flex; gap: 2px; flex-wrap: wrap; }
+.calday .dots i { display: block; width: 7px; height: 7px; border-radius: 50%; }
+.agenda { display: grid; gap: 6px; border-top: 2px solid var(--ink-soft); padding-top: 8px; }
+.aghead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.aghead b { font-weight: 400; letter-spacing: .06em; text-transform: uppercase; font-size: 13px; }
+.evlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ev { display: flex; gap: 8px; align-items: center; justify-content: space-between; border-left: 6px solid var(--ink-soft); padding: 4px 0 4px 8px; background: transparent; }
+.evnone { color: var(--ink-soft); font-size: 13px; }
+.evmain { display: grid; gap: 1px; min-width: 0; }
+.evt { font-size: 12px; letter-spacing: .06em; color: var(--ink-soft); }
+.evn { font-weight: 400; font-size: 17px; overflow-wrap: anywhere; }
+.evm { font-size: 12px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.evact { display: flex; gap: 4px; align-items: center; flex: none; }
+.evact .btn { min-width: 40px; min-height: 40px; padding: 0 8px; }
+.evform { border: 2px dashed var(--ink); background: var(--paper); color: var(--ink); padding: 12px; display: grid; gap: 8px; }
+.evform input, .evform select, .evform textarea { font: inherit; color: var(--ink); background: transparent; border: 2px solid var(--ink); padding: 8px; min-height: 44px; min-width: 0; width: 100%; box-sizing: border-box; }
+.evform .chk input { width: auto; min-height: 0; }
+.evform .chk select { width: auto; flex: 1; }
+.evrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.evrow label { display: grid; gap: 2px; font-size: 12px; color: var(--ink-soft); letter-spacing: .04em; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.sw { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--paper); box-shadow: 0 0 0 1px var(--ink-soft); padding: 0; }
+.sw.on { box-shadow: 0 0 0 3px var(--ink); }
+.nextev { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--ink); margin-top: 4px; }
+.evdot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <radialGradient id="gSm" cx=".36" cy=".3" r=".85"><stop offset="0" stop-color="#fffbb8"/><stop offset=".4" stop-color="#ffd324"/><stop offset=".8" stop-color="#d89a00"/><stop offset="1" stop-color="#8f5d00"/></radialGradient>
+    <radialGradient id="gEv" cx=".36" cy=".3" r=".85"><stop offset="0" stop-color="#ffb0a0"/><stop offset=".4" stop-color="#e5301f"/><stop offset=".8" stop-color="#9c1308"/><stop offset="1" stop-color="#4f0602"/></radialGradient>
+    <radialGradient id="gSpec" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="gMetal" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#6e7378"/><stop offset=".35" stop-color="#f4f6f8"/><stop offset=".6" stop-color="#9aa0a6"/><stop offset="1" stop-color="#4a4e52"/></linearGradient>
+    <filter id="pinBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6"/></filter>
+    <g id="pinSmile">
+      <ellipse cx="31" cy="61.5" rx="11" ry="2.6" fill="#000" opacity=".3" filter="url(#pinBlur)"/>
+      <path d="M22.4 38 L25.6 38 L24.5 62 L23.5 62 Z" fill="url(#gMetal)"/>
+      <ellipse cx="24" cy="38" rx="6.4" ry="2.3" fill="url(#gMetal)"/>
+      <circle cx="24" cy="22" r="18" fill="url(#gSm)"/>
+      <circle cx="24" cy="22" r="17.6" fill="none" stroke="#7a4f00" stroke-opacity=".5" stroke-width="1"/>
+      <ellipse cx="14.2" cy="26" rx="3.2" ry="2" fill="#ff7a3c" opacity=".35"/>
+      <ellipse cx="33.8" cy="26" rx="3.2" ry="2" fill="#ff7a3c" opacity=".35"/>
+      <ellipse cx="17.5" cy="18.5" rx="2.4" ry="3.6" fill="#3b2800"/>
+      <ellipse cx="30.5" cy="18.5" rx="2.4" ry="3.6" fill="#3b2800"/>
+      <circle cx="18.2" cy="16.9" r="0.9" fill="#fff" opacity=".9"/>
+      <circle cx="31.2" cy="16.9" r="0.9" fill="#fff" opacity=".9"/>
+      <path d="M13.5 26.5 Q24 37.5 34.5 26.5" fill="none" stroke="#3b2800" stroke-width="2.6" stroke-linecap="round"/>
+      <ellipse cx="30" cy="34" rx="8" ry="3" fill="#fff" opacity=".16"/>
+      <ellipse cx="16.5" cy="11" rx="7.5" ry="4.4" transform="rotate(-30 16.5 11)" fill="url(#gSpec)"/>
+    </g>
+    <g id="pinEvil">
+      <ellipse cx="31" cy="61.5" rx="11" ry="2.6" fill="#000" opacity=".3" filter="url(#pinBlur)"/>
+      <path d="M22.4 38 L25.6 38 L24.5 62 L23.5 62 Z" fill="url(#gMetal)"/>
+      <ellipse cx="24" cy="38" rx="6.4" ry="2.3" fill="url(#gMetal)"/>
+      <path d="M10 11 C4 7 3 -1 7 -6 C9 0 14 3 18 5 Z" fill="url(#gEv)"/>
+      <path d="M38 11 C44 7 45 -1 41 -6 C39 0 34 3 30 5 Z" fill="url(#gEv)"/>
+      <circle cx="24" cy="22" r="18" fill="url(#gEv)"/>
+      <circle cx="24" cy="22" r="17.6" fill="none" stroke="#3a0300" stroke-opacity=".55" stroke-width="1"/>
+      <path d="M11.5 13.5 L21 18.5" stroke="#1d0300" stroke-width="3" stroke-linecap="round"/>
+      <path d="M36.5 13.5 L27 18.5" stroke="#1d0300" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="17" cy="21.5" rx="2.8" ry="2.3" fill="#ffe04a"/>
+      <ellipse cx="31" cy="21.5" rx="2.8" ry="2.3" fill="#ffe04a"/>
+      <circle cx="17.7" cy="21.8" r="1.1" fill="#1d0300"/>
+      <circle cx="30.3" cy="21.8" r="1.1" fill="#1d0300"/>
+      <path d="M12 28 Q24 41 36 28 Z" fill="#2a0300"/>
+      <path d="M15.2 29.6 L17.6 33.6 L20 31 Z M20.8 31.4 L23.4 35.2 L25.8 31.6 Z M26.4 31 L28.8 33.6 L31.2 29.6 Z" fill="#fff5e0"/>
+      <ellipse cx="30" cy="34" rx="8" ry="3" fill="#fff" opacity=".12"/>
+      <ellipse cx="16.5" cy="11" rx="7.5" ry="4.4" transform="rotate(-30 16.5 11)" fill="url(#gSpec)" opacity=".8"/>
+    </g>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header class="head">
+    <div class="brand">
+      <button class="pinbtn" id="pinBtn" type="button" aria-pressed="false" aria-label="Flip the pin to switch between missions and the shouldn't-do list">
+        <span class="pin3d">
+          <span class="face front"><svg viewBox="0 -8 48 72" aria-hidden="true"><use href="#pinSmile"/></svg></span>
+          <span class="face back"><svg viewBox="0 -8 48 72" aria-hidden="true"><use href="#pinEvil"/></svg></span>
+        </span>
+      </button>
+      <div>
+        <div class="stamp" id="day">Today</div>
+        <div class="count" id="count">&nbsp;</div>
+        <div class="nextev" id="nextEv" hidden></div>
+      </div>
+    </div>
+    <button class="btn ghost" id="optBtn" type="button" aria-expanded="false" aria-controls="options">Options</button>
+  </header>
+
+  <div class="meters" id="meters" hidden>
+    <div class="stress" id="stressBox"><span>Stress</span><div class="meter"><i id="stressFill"></i></div><b id="stressWord">Calm</b></div>
+    <div class="rankbox" id="rankBox"></div>
+    <div class="adbox" id="adBox" hidden></div>
+  </div>
+
+  <section class="suggest opts" id="options" hidden aria-label="Options">
+    <h2>Options</h2>
+    <details open>
+      <summary>Theme</summary>
+      <div class="grp">
+        <div class="themegrid" id="themeGrid" role="group" aria-label="Look"></div>
+        <div class="seg" role="group" aria-label="Color mode">
+          <button id="cmAuto" type="button" aria-pressed="true">Auto</button>
+          <button id="cmLight" type="button" aria-pressed="false">Light</button>
+          <button id="cmDark" type="button" aria-pressed="false">Dark</button>
+        </div>
+        <div class="msg">Every theme except Map and Notes keeps its own colors, whatever the color mode.</div>
+      </div>
+    </details>
+    <details>
+      <summary>Errand life</summary>
+      <div class="grp">
+        <label class="chk"><input type="checkbox" id="weekOn"> Week strip and Friday wrap-up</label>
+        <label class="chk"><input type="checkbox" id="hasOn"> Random hassles on new missions</label>
+        <label class="chk"><input type="checkbox" id="strsOn"> Stress meter</label>
+        <label class="chk"><input type="checkbox" id="brOn"> "Bring" field on missions</label>
+        <div class="msg">Achievements</div>
+        <ul class="achs" id="achList"></ul>
+      </div>
+    </details>
+    <details>
+      <summary>Racer</summary>
+      <div class="grp">
+        <label class="chk"><input type="checkbox" id="rankOn"> Rank and cash</label>
+        <label class="chk"><input type="checkbox" id="raceOn"> Race the clock panel</label>
+        <label class="chk"><input type="checkbox" id="roadOn"> Road progress strip (always on in the Racer theme)</label>
+        <label class="chk" for="station">Radio
+          <select id="station">
+            <option value="auto">Match the theme</option>
+            <option value="map">Dusty Map FM</option>
+            <option value="notes">Cork Board Radio</option>
+            <option value="errands">Night Shift 88</option>
+            <option value="highway">Neon Highway</option>
+            <option value="pit">Pit Stop FM</option>
+          </select>
+        </label>
+        <label class="chk"><input type="checkbox" id="adsOn"> Radio ads between songs</label>
+        <div class="msg">Rank goes up with cash from finished missions. Nothing is locked yet, so every theme and sound is already open.</div>
+      </div>
+    </details>
+    <details>
+      <summary>Map</summary>
+      <div class="grp">
+        <label class="chk"><input type="checkbox" id="fogOn"> Fog of war</label>
+        <div class="row-actions"><button class="btn ghost" id="refog" type="button">Bring the fog back</button></div>
+        <label class="chk"><input type="checkbox" id="movOn"> Moving details: traffic and time of day</label>
+        <label class="chk"><input type="checkbox" id="mapAllOn"> Show the map in every theme</label>
+        <div class="msg" id="mapMsg">Use Drop a pin under the map to add your own places.</div>
+      </div>
+    </details>
+    <details>
+      <summary>Music</summary>
+      <div class="grp">
+        <label class="chk"><input type="checkbox" id="musOn"> Background music</label>
+        <label class="chk" for="vol">Volume <input type="range" id="vol" min="0" max="100" step="1" style="flex:1"></label>
+        <label class="chk"><input type="checkbox" id="plOwn"> Play my tracks instead of the built-in music</label>
+        <label class="chk"><input type="checkbox" id="plShuf"> Shuffle my tracks</label>
+        <div class="row-actions">
+          <label class="btn ghost filebtn">Add tracks<input type="file" id="plIn" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.aac" multiple></label>
+          <button class="btn ghost" id="plNext" type="button">Skip track</button>
+        </div>
+        <ol class="pllist" id="plList" aria-label="My tracks"></ol>
+        <div class="msg" id="sndMsg" role="status">The built-in music is an original loop. Pick a station under Racer.</div>
+      </div>
+    </details>
+    <details id="mediaSec">
+      <summary>Pictures and sounds</summary>
+      <div class="grp">
+        <div class="msg">Choose buttons need a regular browser tab. The Claude preview blocks file pickers. Everything you add stays on this device only: it is not synced and not in the .json backup.</div>
+        <div class="mh">Pictures</div>
+        <div id="imgSlots" class="slots"></div>
+        <label class="chk"><input type="checkbox" id="mapSketch"> Draw the sketch roads on top of my map picture</label>
+        <div class="mh">Theme wallpapers</div>
+        <div id="wallSlots" class="slots"></div>
+        <div class="mh">Sound effects</div>
+        <div id="sfxSlots" class="slots"></div>
+        <div class="mh">Music per theme</div>
+        <div id="themeMusSlots" class="slots"></div>
+        <div class="msg" id="mediaMsg" role="status"></div>
+      </div>
+    </details>
+    <details>
+      <summary>Effects</summary>
+      <div class="grp">
+        <label class="chk"><input type="checkbox" id="sfxOn"> Sound effects</label>
+        <label class="chk"><input type="checkbox" id="scrOn"> Scribble on buttons</label>
+      </div>
+    </details>
+    <details>
+      <summary>Animations</summary>
+      <div class="grp">
+        <label class="chk"><input type="checkbox" id="prtOn"> Receipt print-out when adding a mission</label>
+        <label class="chk"><input type="checkbox" id="wobOn"> Wobbly, hand-drawn button borders</label>
+        <label class="chk"><input type="checkbox" id="wobAllOn"> Also on panels, inputs, notes, calendar and the map frame</label>
+        <label class="chk"><input type="checkbox" id="strOn"> Cross-outs draw in</label>
+        <label class="chk"><input type="checkbox" id="tiltOn"> Tilted sticky notes</label>
+        <label class="chk"><input type="checkbox" id="calmOn"> Reduce all motion</label>
+      </div>
+    </details>
+    <details>
+      <summary>Preferences</summary>
+      <div class="grp">
+        <label class="chk"><input type="checkbox" id="botOn"> Move finished missions to the bottom</label>
+        <label class="chk"><input type="checkbox" id="tagOn"> Show place names under missions</label>
+      </div>
+    </details>
+    <details>
+      <summary>Events and reminders</summary>
+      <div class="grp">
+        <div class="msg">Open Month in the week strip, pick a day and use Add event. Events have times, colours, a place, details and an optional reminder. Colours match Google Calendar's event colours, ready for syncing later.</div>
+        <div class="row-actions"><button class="btn ghost" id="notifBtn" type="button">Allow notifications</button></div>
+        <div class="msg" id="notifMsg" role="status"></div>
+      </div>
+    </details>
+    <details id="phoneSec" hidden>
+      <summary>Phone</summary>
+      <div class="grp">
+        <label class="chk"><input type="checkbox" id="phRem"> Phone reminders for my events, even when the app is closed</label>
+        <div class="row-actions"><button class="btn ghost" id="phNotif" type="button" data-step="perm">Allow notifications</button></div>
+        <div class="msg" id="phNotifMsg" role="status"></div>
+        <div class="mh">Phone calendar</div>
+        <div class="row-actions"><button class="btn" id="phConnect" type="button">Connect phone calendar</button><button class="btn ghost" id="phSync" type="button">Sync now</button></div>
+        <div id="phCalBox" hidden>
+          <div class="msg">Show events from these calendars:</div>
+          <div id="phCals" class="slots"></div>
+          <label class="chk" for="phWrite">Save my events into <select id="phWrite"></select></label>
+        </div>
+        <div class="msg" id="phMsg" role="status">Events from your phone calendars show up in the month view, in the nearest Google Calendar colour. Their own alerts stay with the calendar app.</div>
+      </div>
+    </details>
+    <details id="backup">
+      <summary>Backup</summary>
+      <div class="grp">
+        <div class="row-actions">
+          <button class="btn" id="saveJson" type="button">Save .json</button>
+          <button class="btn ghost" id="copyJson" type="button">Copy</button>
+          <label class="btn ghost filebtn">Import file<input type="file" id="fileIn" accept=".json,application/json,text/plain"></label>
+        </div>
+        <textarea id="jsonBox" spellcheck="false" aria-label="Missions as JSON. Paste JSON here to import."></textarea>
+        <label class="chk"><input type="checkbox" id="replace"> Replace my list instead of merging</label>
+        <div class="row-actions">
+          <button class="btn ghost" id="importPasted" type="button">Import pasted JSON</button>
+        </div>
+        <div class="msg" id="bkMsg" role="status"></div>
+      </div>
+    </details>
+    <div class="row-actions"><button class="btn ghost" id="optClose" type="button">Close</button></div>
+  </section>
+
+  <form class="add" id="addForm" autocomplete="off">
+    <input id="newText" maxlength="80" placeholder="New mission" aria-label="New mission">
+    <select id="newPlace" aria-label="Where"></select>
+    <button class="btn" type="submit" id="addBtn">Add</button>
+    <input class="where" id="newWhere" maxlength="120" placeholder="Real place or address (optional, for Maps)" aria-label="Real place or address">
+    <label class="btn ghost filebtn picpick" id="newPicLbl">Add a photo<input type="file" id="newPic" accept="image/*"></label>
+    <input class="bring" id="newBring" maxlength="80" placeholder="Bring (optional): bag, ID, the parcel" aria-label="Things to bring" hidden>
+  </form>
+
+  <section class="week" id="week" hidden aria-label="Week">
+    <div class="days" id="days"></div>
+  </section>
+  <section class="suggest" id="wrap" hidden aria-label="Week wrap-up"></section>
+  <section class="cal" id="cal" hidden aria-label="Month calendar"></section>
+  <form class="evform" id="evForm" hidden autocomplete="off" aria-label="Event">
+    <input id="evTitle" maxlength="60" placeholder="Event title" aria-label="Event title">
+    <div class="evrow"><label>Date <input type="date" id="evDate"></label><label>Until (optional) <input type="date" id="evEnd"></label></div>
+    <label class="chk"><input type="checkbox" id="evAll"> All day</label>
+    <div class="evrow" id="evTimes"><label>Start <input type="time" id="evStart"></label><label>End <input type="time" id="evEndT"></label></div>
+    <div class="swatches" id="evSw" role="radiogroup" aria-label="Colour"></div>
+    <select id="evPlace" aria-label="Place on the map"></select>
+    <input id="evWhere" maxlength="120" placeholder="Real place or address (optional, for Maps)" aria-label="Real place or address">
+    <textarea id="evNotes" maxlength="300" rows="2" placeholder="Details (optional)" aria-label="Details"></textarea>
+    <label class="chk" for="evRem">Reminder
+      <select id="evRem"><option value="-1">None</option><option value="0">At start</option><option value="10">10 minutes before</option><option value="30">30 minutes before</option><option value="60">1 hour before</option><option value="1440">1 day before</option></select>
+    </label>
+    <div class="row-actions"><button class="btn" type="submit" id="evSave">Save event</button><button class="btn ghost" type="button" id="evCancel">Cancel</button></div>
+    <div class="msg" id="evMsg" role="status"></div>
+  </form>
+
+  <section class="road" id="road" hidden aria-label="Progress road">
+    <div class="lane"></div>
+    <div id="cps"></div>
+    <span class="bike" id="bike"><svg viewBox="0 0 44 30" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="22" r="6"/><circle cx="35" cy="22" r="6"/><path d="M9 22L18 22L25 13L32 13L35 22M18 22L22 14"/><path d="M22 14L27 10L31 13"/></g><circle cx="26" cy="5" r="3.2" fill="currentColor"/></svg></span>
+    <span class="roadnote" id="roadNote"></span>
+  </section>
+
+  <main class="layout">
+    <section class="mapcard" id="mapcard" aria-label="Town map">
+      <span class="hint" id="mapHint">tap a place to filter</span>
+      <svg id="map" viewBox="0 0 400 300" role="img" aria-label="Sketch map of the town"></svg>
+      <div class="mapbar">
+        <button class="btn ghost" id="dropBtn" type="button">Drop a pin</button>
+        <span id="pinCount"></span>
+      </div>
+      <form class="pinform" id="pinForm" hidden autocomplete="off">
+        <input id="pinName" maxlength="24" placeholder="Name this pin" aria-label="Pin name">
+        <button class="btn" type="submit">Save pin</button>
+        <button class="btn ghost" type="button" id="pinCancel">Cancel</button>
+      </form>
+    </section>
+    <section id="listSec">
+      <div class="paper" id="paper">
+        <div class="rc-head" aria-hidden="true"><div>Errand receipt</div><div id="rcDate"></div><div class="dash"></div></div>
+        <h2 id="listTitle">Missions</h2>
+        <div class="filter" id="filter" hidden></div>
+        <ul class="missions" id="list"></ul>
+        <div class="rc-foot" aria-hidden="true"><div class="dash"></div><div class="rc-sum"><span id="rcItems"></span><span id="rcDone"></span></div><div class="rc-bar"></div><div>Thank you. Come again.</div></div>
+        <div class="sample" id="sample" hidden>
+          <span>Sample missions to show how it works.</span>
+          <button id="clearSamples" type="button">Clear samples</button>
+        </div>
+      </div>
+      <ul class="notes" id="notesList" hidden></ul>
+    </section>
+  </main>
+
+  <section class="bottom">
+    <div class="row-actions">
+      <button class="btn ghost" id="sugBtn" type="button">Suggest missions</button>
+      <a class="btn ghost" id="routeBtn" target="_blank" rel="noopener noreferrer" hidden>Plan route</a>
+    </div>
+    <section class="suggest" id="sug" hidden></section>
+    <section class="suggest race" id="race" hidden aria-label="Race the clock">
+      <h2>Race the clock</h2>
+      <div class="row-actions" id="raceIdle">
+        <label class="chk" for="raceMin">Minutes
+          <select id="raceMin"><option value="10">10</option><option value="20">20</option><option value="40" selected>40</option><option value="60">60</option></select>
+        </label>
+        <button class="btn" id="raceGo" type="button">Start race</button>
+      </div>
+      <div id="raceRun" hidden>
+        <div class="timer" id="raceTime">00:00</div>
+        <div class="msg" id="raceInfo"></div>
+        <div class="row-actions"><button class="btn ghost" id="raceStop" type="button">Give up</button></div>
+      </div>
+      <div class="msg" id="raceMsg" role="status"></div>
+    </section>
+  </section>
+  <div class="foot" id="status"></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+  var NS = "http://www.w3.org/2000/svg";
+  var PLACES = {
+    home:    { n: "Home",         x: 60,  y: 218 },
+    market:  { n: "Market",       x: 130, y: 100 },
+    post:    { n: "Post Office",  x: 275, y: 62 },
+    library: { n: "Library",      x: 345, y: 108 },
+    bank:    { n: "Bank",         x: 280, y: 222 },
+    gas:     { n: "Gas Station",  x: 55,  y: 62 },
+    campus:  { n: "Campus",       x: 345, y: 222 },
+    park:    { n: "Park",         x: 160, y: 222 }
+  };
+  var ICONS = {
+    home: '<path d="M-13 10V-4L0-15L13-4V10Z"/><path d="M-3 10V2H3V10"/>',
+    market: '<path d="M-14 10V-2H14V10Z"/><path d="M-16-2L-12-12H12L16-2Z"/><path d="M-6-12L-7-2M0-12V-2M6-12L7-2"/>',
+    post: '<path d="M-14-10H14V10H-14Z"/><path d="M-14-10L0 2L14-10"/>',
+    library: '<path d="M-14 10H14M-12-2V10M-4-2V10M4-2V10M12-2V10M-15-2H15L0-14Z"/>',
+    bank: '<path d="M-14 10V-8H14V10Z"/><path d="M-5 10V2a5 5 0 0 1 10 0V10"/>',
+    gas: '<path d="M-8 10V-12H4V10Z"/><path d="M-8-6H4M4-4H9V6a2 2 0 0 0 4 0V-6L9-10"/>',
+    campus: '<path d="M-14 10V-4H14V10Z"/><path d="M-14-4L0-13L14-4M-4 10V3H4V10M0-13V-21L7-18L0-16"/>',
+    park: '<circle cx="-6" cy="-3" r="8"/><circle cx="7" cy="0" r="6"/><path d="M-6 5V12M7 6V12"/>'
+  };
+  var ROADS = ["M-5 150C100 140 300 160 405 148", "M205 -5C200 100 210 200 202 305", "M-5 262C120 256 280 268 405 260"];
+  var POOL = [
+    ["Do the dishes", "home"], ["Take out the trash", "home"], ["Fold the laundry", "home"], ["Water the plants", "home"],
+    ["Buy milk and bread", "market"], ["Pick something for dinner", "market"], ["Restock the coffee", "market"],
+    ["Mail the parcel", "post"], ["Pick up the package", "post"],
+    ["Return the overdue book", "library"], ["Find a book for the report", "library"],
+    ["Pay the phone bill", "bank"], ["Check the account balance", "bank"],
+    ["Fill up the tank", "gas"], ["Check the tire pressure", "gas"],
+    ["Read one article", "campus"], ["Email the advisor", "campus"], ["Submit the assignment", "campus"],
+    ["Walk for 20 minutes", "park"], ["Sit outside with a book", "park"]
+  ];
+  var POOL_EVIL = [
+    ["Hit snooze five times", "home"], ["Eat the whole bag of chips", "home"], ["Skip the dishes again", "home"],
+    ["Check your phone in bed", "home"], ["Buy something you do not need", "market"],
+    ["Watch videos instead of the assignment", "campus"], ["Drive past the fuel light", "gas"],
+    ["Spend an hour scrolling at the park", "park"]
+  ];
+  var HASSLES = ["Line out the door", "Closed for lunch", "Cash only", "Wrong form, come back later", "Out of stock",
+    "Someone is already at the counter", "Rain expected", "Parking is full", "The system is down", "Take a number"];
+  var ADS = ["Pit Stop Pies: hot, fast, mostly legal.", "Tuesday Tires: round things for round people.",
+    "Neon Noodles, open until the sun says otherwise.", "Ask your mechanic about gravity.",
+    "Left Lane Lemonade. Sip responsibly.", "The Night Shift hour is brought to you by thermos coffee."];
+  var THEMES = [["map", "Map"], ["notes", "Notes"], ["errands", "Errands"], ["racer", "Racer"], ["zine", "Zine"], ["wanted", "Wanted"], ["receipt", "Receipt"], ["comic", "Comic"]];
+  var GRID = { notes: 1, wanted: 1 };
+  var RANKS = [[0, "Rookie"], [50, "Courier"], [150, "Roadie"], [300, "Street racer"], [600, "Road king"]];
+  var DAYN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  var KEY = "mission-map-v1", XKEY = "mission-map-extra", VKEY = "mission-map-view", EKEY = "mission-map-evil";
+  var items = [], pins = [], visited = {}, stats = { cash: 0, races: 0, best: {}, unlocked: {} };
+  var events = [], view = "map", evil = false, filter = null, dayFilter = null, wrapOpen = false;
+  var lastToggled = null, lastAdded = null, ref = null, queue = Promise.resolve();
+  var dropping = false, tempPin = null, race = null, raceTimer = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+  function pad(n) { return ("0" + n).slice(-2); }
+  function dkey(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function todayKey() { return dkey(new Date()); }
+  function weekDays() {
+    var d = new Date(), dow = (d.getDay() + 6) % 7, a = [];
+    for (var i = 0; i < 7; i++) a.push(dkey(new Date(d.getFullYear(), d.getMonth(), d.getDate() - dow + i)));
+    return a;
+  }
+  function str(v, n) { return typeof v === "string" ? v.trim().slice(0, n) : ""; }
+  function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+  function svgEl(tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+
+  /* ---------- places and pins ---------- */
+  function pinById(id) { for (var i = 0; i < pins.length; i++) if (pins[i].id === id) return pins[i]; return null; }
+  function isPinKey(k) { return typeof k === "string" && k.indexOf("p:") === 0; }
+  function placeInfo(k) {
+    if (PLACES[k]) return PLACES[k];
+    if (isPinKey(k)) { var p = pinById(k.slice(2)); if (p) return { n: p.name, x: p.x, y: p.y }; }
+    return PLACES.home;
+  }
+  function cleanPins(a) {
+    var out = [];
+    if (!Array.isArray(a)) return out;
+    a.slice(0, 30).forEach(function (p) {
+      if (!p || typeof p.id !== "string" || !p.id) return;
+      var x = Number(p.x), y = Number(p.y);
+      if (!isFinite(x) || !isFinite(y)) return;
+      out.push({ id: p.id.slice(0, 20), name: str(p.name, 24) || "Pin", x: Math.max(8, Math.min(392, x)), y: Math.max(14, Math.min(286, y)) });
+    });
+    return out;
+  }
+  var EVCOL = [["lavender", "Lavender", "#7986cb"], ["sage", "Sage", "#33b679"], ["grape", "Grape", "#8e24aa"], ["flamingo", "Flamingo", "#e67c73"], ["banana", "Banana", "#f6bf26"], ["tangerine", "Tangerine", "#f4511e"],
+    ["peacock", "Peacock", "#039be5"], ["graphite", "Graphite", "#616161"], ["blueberry", "Blueberry", "#3f51b5"], ["basil", "Basil", "#0b8043"], ["tomato", "Tomato", "#d50000"]];
+  function evHex(k) { for (var i = 0; i < EVCOL.length; i++) if (EVCOL[i][0] === k) return EVCOL[i][2]; return "#039be5"; }
+  var DRE = /^\d{4}-\d{2}-\d{2}$/, TRE = /^([01]\d|2[0-3]):[0-5]\d$/;
+  function cleanEvents(a) {
+    var out = [];
+    if (!Array.isArray(a)) return out;
+    a.slice(0, 500).forEach(function (r) {
+      if (!r || typeof r !== "object") return;
+      var title = str(r.title, 60), date = typeof r.date === "string" && DRE.test(r.date) ? r.date : "";
+      if (!title || !date) return;
+      var endDate = typeof r.endDate === "string" && DRE.test(r.endDate) && r.endDate > date ? r.endDate : "";
+      var start = typeof r.start === "string" && TRE.test(r.start) ? r.start : "", end = typeof r.end === "string" && TRE.test(r.end) ? r.end : "";
+      var allDay = !!r.allDay || !start; if (allDay) { start = ""; end = ""; }
+      var color = EVCOL.some(function (c) { return c[0] === r.color; }) ? r.color : "peacock";
+      var rem = [-1, 0, 10, 30, 60, 1440].indexOf(Number(r.remind)) >= 0 ? Number(r.remind) : -1;
+      out.push({ id: typeof r.id === "string" && r.id ? r.id.slice(0, 48) : uid(), title: title, date: date, endDate: endDate, allDay: allDay, start: start, end: end, color: color,
+        place: str(r.place, 20), where: str(r.where, 120), notes: str(r.notes, 300), remind: rem,
+        src: r.src === "device" ? "device" : "", ext: r.ext && typeof r.ext.id === "string" && r.ext.id ? { id: r.ext.id.slice(0, 40), cal: str(r.ext.cal, 20), sig: str(r.ext.sig, 400) } : null });
+    });
+    return out;
+  }
+  function cleanStats(s) {
+    var o = { cash: 0, races: 0, best: {}, unlocked: {} };
+    if (!s || typeof s !== "object") return o;
+    if (isFinite(s.cash) && s.cash > 0) o.cash = Math.floor(s.cash);
+    if (isFinite(s.races) && s.races > 0) o.races = Math.floor(s.races);
+    if (isFinite(s.fogFrom) && s.fogFrom > 0) o.fogFrom = Number(s.fogFrom);
+    if (s.best && typeof s.best === "object") Object.keys(s.best).slice(0, 40).forEach(function (k) { if (isFinite(s.best[k]) && s.best[k] > 0) o.best[String(k).slice(0, 4)] = Math.floor(s.best[k]); });
+    if (s.unlocked && typeof s.unlocked === "object") Object.keys(s.unlocked).slice(0, 40).forEach(function (k) { if (isFinite(s.unlocked[k])) o.unlocked[String(k).slice(0, 20)] = s.unlocked[k]; });
+    return o;
+  }
+  function cleanVisited(v) {
+    var o = {};
+    if (v && typeof v === "object") Object.keys(v).slice(0, 60).forEach(function (k) { if (v[k]) o[String(k).slice(0, 24)] = true; });
+    return o;
+  }
+  function cleanItem(r, keepSample) {
+    if (!r || typeof r.text !== "string" || !r.text.trim()) return null;
+    var pl = (typeof r.place === "string" && (PLACES[r.place] || isPinKey(r.place))) ? r.place : "home";
+    return {
+      id: typeof r.id === "string" && r.id ? r.id.slice(0, 40) : uid(),
+      text: r.text.trim().slice(0, 80), place: pl,
+      where: str(r.where, 120), bring: str(r.bring, 80), hassle: str(r.hassle, 80),
+      done: !!r.done, evil: !!r.evil, paid: !!r.paid, sample: keepSample ? !!r.sample : false,
+      date: (typeof r.date === "string" && /^\d{4}-\d\d-\d\d$/.test(r.date)) ? r.date : todayKey(),
+      doneAt: isFinite(r.doneAt) ? Number(r.doneAt) : 0
+    };
+  }
+  function seedItems() {
+    var t = todayKey();
+    return [
+      { text: "Buy milk and bread", place: "market", bring: "Cloth bag", done: false },
+      { text: "Mail the parcel", place: "post", done: false },
+      { text: "Return the overdue book", place: "library", done: false },
+      { text: "Fill up the tank", place: "gas", done: false },
+      { text: "Water the plants", place: "home", done: true, paid: true, doneAt: Date.now() - 3600e3 }
+    ].map(function (s) { return cleanItem({ id: uid(), text: s.text, place: s.place, bring: s.bring, done: s.done, paid: s.paid, doneAt: s.doneAt, date: t, sample: true }, true); });
+  }
+
+  /* ---------- load saved state ---------- */
+  var ex = {};
+  try { ex = JSON.parse(localStorage.getItem(XKEY) || "{}") || {}; } catch (e) { ex = {}; }
+  events = cleanEvents(ex.events); pins = cleanPins(ex.pins); visited = cleanVisited(ex.visited); stats = cleanStats(ex.stats);
+  var haveSaved = false;
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (Array.isArray(saved)) { items = saved.map(function (r) { return cleanItem(r, true); }).filter(Boolean); haveSaved = true; }
+  } catch (e) {}
+  if (!haveSaved) items = seedItems();
+  try { var v0 = localStorage.getItem(VKEY); if (THEMES.some(function (t) { return t[0] === v0; })) view = v0; } catch (e) {}
+  try { evil = localStorage.getItem(EKEY) === "1"; } catch (e) {}
+  try {
+    if (new Date().getDay() === 5 && localStorage.getItem("mission-map-wrapday") !== todayKey()) { wrapOpen = true; localStorage.setItem("mission-map-wrapday", todayKey()); }
+  } catch (e) {}
+  markVisitedFromItems();
+
+  function markVisitedFromItems() { items.forEach(function (i) { if (i.done && !i.evil && (i.doneAt || 0) >= (stats.fogFrom || 0)) visited[i.place] = true; }); }
+  function cur() { return items.filter(function (i) { return !!i.evil === evil; }); }
+  function norm() { return items.filter(function (i) { return !i.evil; }); }
+  function isReduced() { return opts.reduce || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); }
+
+  /* ---------- map ---------- */
+  function buildMap() {
+    var s = '<defs><filter id="rough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3"/></filter>' +
+      '<filter id="fogblur" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.2"/></filter>';
+    ROADS.forEach(function (d, i) { s += '<path id="rd' + i + '" d="' + d + '" fill="none"/>'; });
+    s += '</defs><g filter="url(#rough)">';
+    s += '<path class="river" d="M-5 192C70 172 120 208 200 192S330 172 405 188"/>';
+    s += '<path class="wave" d="M30 186q4-4 8 0t8 0M110 200q4-4 8 0t8 0M250 182q4-4 8 0t8 0M330 192q4-4 8 0t8 0"/>';
+    ROADS.forEach(function (d) { s += '<path class="rd-o" d="' + d + '"/>'; });
+    ROADS.forEach(function (d) { s += '<path class="rd-i" d="' + d + '"/>'; });
+    Object.keys(PLACES).forEach(function (k) {
+      var p = PLACES[k];
+      s += '<g class="ico" transform="translate(' + p.x + ' ' + p.y + ')">' + ICONS[k] + '</g>';
+    });
+    s += '</g>';
+    s += '<g id="traffic"></g><rect id="tint" width="400" height="300" fill="#000" opacity="0" pointer-events="none"/><g id="sky" pointer-events="none"></g>';
+    s += '<text class="maptitle" x="12" y="291" transform="rotate(-1.5 12 291)">MAP MUZEK</text>';
+    Object.keys(PLACES).forEach(function (k) {
+      var p = PLACES[k];
+      s += '<g class="place" data-p="' + k + '" tabindex="0" role="button" aria-label="' + p.n + '" transform="translate(' + p.x + ' ' + p.y + ')">' +
+        '<circle class="ring" r="26"/>' +
+        '<g class="fog" filter="url(#fogblur)"><ellipse cx="-6" cy="-2" rx="22" ry="16"/><ellipse cx="9" cy="3" rx="20" ry="15"/><ellipse cx="0" cy="-9" rx="18" ry="13"/></g>' +
+        '<circle r="28" fill="transparent"/>' +
+        '<text class="plabel" y="30">' + p.n + '</text><g class="badge" transform="translate(16 -15)"></g></g>';
+    });
+    s += '<g id="pinLayer"></g><g id="tempLayer" pointer-events="none"></g>';
+    $("map").innerHTML = s;
+  }
+
+  function buildTraffic() {
+    var box = $("traffic"); if (!box) return;
+    box.innerHTML = "";
+    if (!opts.moving || isReduced()) return;
+    var CARS = [{ r: 0, d: 17, rev: false, c: "#c4382b" }, { r: 0, d: 22, rev: true, c: "#3d6a8c" }, { r: 1, d: 14, rev: false, c: "#d9a621" }, { r: 2, d: 19, rev: true, c: "#5d7a4b" }];
+    CARS.forEach(function (c, i) {
+      var g = svgEl("g", { "class": "car" });
+      var am = svgEl("animateMotion", { dur: c.d + "s", repeatCount: "indefinite", rotate: c.rev ? "auto-reverse" : "auto", begin: "-" + (i * 3.7) + "s" });
+      if (c.rev) { am.setAttribute("keyPoints", "1;0"); am.setAttribute("keyTimes", "0;1"); am.setAttribute("calcMode", "linear"); }
+      var mp = svgEl("mpath", { href: "#rd" + c.r }); am.appendChild(mp); g.appendChild(am);
+      var body = svgEl("rect", { "class": "cb", x: -8, y: -4, width: 16, height: 8, rx: 2 }); body.style.fill = c.c; g.appendChild(body);
+      var win = svgEl("rect", { x: 0, y: -3, width: 5, height: 6, rx: 1 }); win.style.fill = "#f4f0d8"; win.style.opacity = ".85"; g.appendChild(win);
+      box.appendChild(g);
+    });
+  }
+  function updateSky() {
+    var tint = $("tint"), sky = $("sky"); if (!tint || !sky) return;
+    sky.innerHTML = "";
+    if (!opts.moving) { tint.setAttribute("opacity", "0"); return; }
+    var d = new Date(), h = d.getHours() + d.getMinutes() / 60, col = "#000", a = 0;
+    if (h < 5.5 || h >= 20.5) { col = "#0d1b4a"; a = .34; }
+    else if (h < 7.5) { col = "#ff9a4a"; a = .14; }
+    else if (h >= 18 && h < 20.5) { col = "#ff6a3a"; a = .16; }
+    tint.setAttribute("fill", col); tint.setAttribute("opacity", String(a));
+    var night = (h < 6 || h >= 18), t = night ? (h >= 18 ? h - 18 : h + 6) / 12 : (h - 6) / 12;
+    var x = 30 + t * 340, y = 40 - 28 * Math.sin(Math.PI * t);
+    var g = svgEl("g", { transform: "translate(" + x.toFixed(1) + " " + y.toFixed(1) + ")" });
+    if (night) { var m = svgEl("path", { "class": "sky", d: "M0 -8A8 8 0 1 0 0 8A6 6 0 1 1 0 -8Z" }); m.style.fill = "#e8e8d0"; g.appendChild(m); }
+    else { var c = svgEl("circle", { "class": "sky", r: 8 }); c.style.fill = "#f6c445"; g.appendChild(c); }
+    sky.appendChild(g);
+  }
+
+  function fillSelect() {
+    var sel = $("newPlace"), keep = sel.value;
+    sel.innerHTML = "";
+    Object.keys(PLACES).forEach(function (k) { var o = el("option", null, PLACES[k].n); o.value = k; sel.appendChild(o); });
+    if (pins.length) {
+      var og = document.createElement("optgroup"); og.label = "My pins";
+      pins.forEach(function (p) { var o = el("option", null, p.name); o.value = "p:" + p.id; og.appendChild(o); });
+      sel.appendChild(og);
+    }
+    if (keep && placeInfo(keep) !== PLACES.home || keep === "home") sel.value = keep;
+    if (!sel.value) sel.value = "home";
+  }
+
+  function renderPins(mine) {
+    var layer = $("pinLayer"), act = document.activeElement, focusKey = act && act.getAttribute ? act.getAttribute("data-p") : null;
+    layer.innerHTML = "";
+    pins.forEach(function (p) {
+      var k = "p:" + p.id;
+      var g = svgEl("g", { "class": "place pin" + (filter === k ? " sel" : ""), "data-p": k, tabindex: 0, role: "button", "aria-label": p.name, transform: "translate(" + p.x + " " + p.y + ")" });
+      g.appendChild(svgEl("circle", { "class": "ring", r: 22 }));
+      var hit = svgEl("circle", { r: 24, fill: "transparent" }); g.appendChild(hit);
+      var piu = mediaUrl("i:pinMap") || mediaUrl(evil ? "i:pinEvil" : "i:pinSmile");
+      if (piu) g.appendChild(svgEl("image", { href: piu, x: -12, y: -28, width: 24, height: 30, preserveAspectRatio: "xMidYMid meet" }));
+      else g.appendChild(svgEl("use", { href: evil ? "#pinEvil" : "#pinSmile", transform: "translate(-10 -25.8) scale(.4167)" }));
+      var tx = svgEl("text", { "class": "plabel", y: 13 }); tx.textContent = p.name; g.appendChild(tx);
+      var b = svgEl("g", { "class": "badge", transform: "translate(12 -26)" });
+      var open = mine.filter(function (i) { return i.place === k && !i.done; }).length, all = mine.filter(function (i) { return i.place === k; }).length;
+      if (all && open) { b.appendChild(svgEl("circle", { "class": "bdg", r: 9 })); var bt = svgEl("text", { "class": "bdgt", y: 4.5 }); bt.textContent = String(open); b.appendChild(bt); }
+      else if (all) { b.appendChild(svgEl("circle", { "class": "bdgx", r: 9 })); b.appendChild(svgEl("path", { "class": "bdgm", d: "M-4-4L4 4M4-4L-4 4" })); }
+      g.appendChild(b);
+      layer.appendChild(g);
+    });
+    if (focusKey && isPinKey(focusKey)) { var f = layer.querySelector('[data-p="' + focusKey + '"]'); if (f && f.focus) f.focus(); }
+    var tl = $("tempLayer"); tl.innerHTML = "";
+    if (tempPin) tl.appendChild(svgEl("circle", { "class": "temp", cx: tempPin.x, cy: tempPin.y, r: 12 }));
+  }
+
+  /* ---------- rows ---------- */
+  function ransom(t, text) {
+    t.textContent = "";
+    var n = 0;
+    text.split(" ").forEach(function (w, wi) {
+      if (wi > 0) t.appendChild(document.createTextNode(" "));
+      if (!w) return;
+      var rw = el("span", "rw");
+      for (var i = 0; i < w.length; i++) rw.appendChild(el("span", "rl r" + (n++ % 5), w.charAt(i)));
+      t.appendChild(rw);
+    });
+    t.setAttribute("aria-label", text);
+  }
+  function rowEl(it) {
+    var li = el("li", "item" + (it.done ? " done" : "") + (it.evil ? " evil" : ""));
+    li.dataset.id = it.id;
+    var row = el("button", "row"); row.type = "button";
+    row.setAttribute("aria-pressed", it.done ? "true" : "false");
+    var box = el("span", "box");
+    box.innerHTML = '<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M5 6C10 11 17 18 23 23M23 5C17 11 11 18 5 24"/></svg>';
+    var wrap = el("span", "txtwrap");
+    var t = el("span", "t" + (it.done && it.id !== lastToggled ? " struck" : ""));
+    if (view === "zine") ransom(t, it.text); else t.textContent = it.text;
+    t.dataset.id = it.id;
+    var tag = el("span", "tag", placeInfo(it.place).n + (it.evil ? " / don't" : ""));
+    wrap.appendChild(t); wrap.appendChild(tag);
+    if (it.where) wrap.appendChild(el("span", "wh xtra", it.where));
+    if (it.hassle) wrap.appendChild(el("span", "xtra hs", "Hassle: " + it.hassle));
+    if (it.bring) wrap.appendChild(el("span", "xtra br", "Bring: " + it.bring));
+    row.appendChild(box);
+    var th = thumbEl(it.id); if (th) row.appendChild(th);
+    row.appendChild(wrap);
+    row.addEventListener("click", function () { toggle(it.id); });
+    li.appendChild(row);
+    if (it.where) {
+      var go = el("a", "go", "Maps ↗");
+      go.target = "_blank"; go.rel = "noopener noreferrer";
+      go.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(it.where);
+      go.setAttribute("aria-label", "Open " + it.where + " in Maps");
+      li.appendChild(go);
+    }
+    var pc = picControl(it.id); if (pc) li.appendChild(pc);
+    var del = el("button", "del", "×"); del.type = "button";
+    del.setAttribute("aria-label", "Delete mission");
+    del.addEventListener("click", function () { remove(it.id); });
+    li.appendChild(del);
+    return li;
+  }
+
+  /* ---------- meters, week, road ---------- */
+  function stressVal() {
+    var t = todayKey(), v = 0;
+    norm().forEach(function (i) { if (i.done) return; v += 10; if (i.date < t) v += 15; });
+    return Math.min(100, v);
+  }
+  function rankFor(c) { var r = RANKS[0], nx = null; for (var i = 0; i < RANKS.length; i++) { if (c >= RANKS[i][0]) { r = RANKS[i]; nx = RANKS[i + 1] || null; } } return { n: r[1], next: nx }; }
+  function renderMeters() {
+    var showS = opts.stress, showR = opts.rank;
+    $("meters").hidden = !(showS || showR || !$("adBox").hidden);
+    $("stressBox").hidden = !showS; $("rankBox").hidden = !showR;
+    if (showS) {
+      var sv = stressVal();
+      $("stressFill").style.width = sv + "%";
+      $("stressWord").textContent = sv < 25 ? "Calm" : sv < 50 ? "Tense" : sv < 75 ? "Rattled" : "Furious";
+    }
+    if (showR) {
+      var rk = rankFor(stats.cash);
+      $("rankBox").textContent = rk.n + " · $" + stats.cash + (rk.next ? " · next at $" + rk.next[0] : "");
+    }
+  }
+  function renderWeek(mine) {
+    var box = $("week"); box.hidden = !opts.week;
+    if (!opts.week) { $("wrap").hidden = true; return; }
+    var days = weekDays(), t = todayKey(), el0 = $("days"); el0.innerHTML = "";
+    var all = el("button", "daybtn", "All"); all.type = "button"; all.setAttribute("aria-pressed", dayFilter === null ? "true" : "false");
+    all.addEventListener("click", function () { dayFilter = null; render(); });
+    el0.appendChild(all);
+    days.forEach(function (k, i) {
+      var open = mine.filter(function (x) { return x.date === k && !x.done; }).length;
+      var b = el("button", "daybtn" + (k === t ? " today" : "")); b.type = "button";
+      b.appendChild(el("span", null, DAYN[i])); b.appendChild(el("b", null, String(open)));
+      b.setAttribute("aria-pressed", dayFilter === k ? "true" : "false");
+      b.setAttribute("aria-label", DAYN[i] + ", " + open + " open");
+      b.addEventListener("click", function () { dayFilter = dayFilter === k ? null : k; render(); fx("click"); });
+      el0.appendChild(b);
+    });
+    var fri = new Date().getDay() === 5;
+    var w = el("button", "daybtn wrapbtn" + (fri ? " hot" : ""), "Wrap-up"); w.type = "button";
+    w.setAttribute("aria-pressed", wrapOpen ? "true" : "false");
+    w.addEventListener("click", function () { wrapOpen = !wrapOpen; render(); fx("click"); });
+    el0.appendChild(w);
+    var cb = el("button", "daybtn wrapbtn", "Month"); cb.type = "button"; cb.style.marginLeft = "0";
+    cb.setAttribute("aria-pressed", calOpen ? "true" : "false"); cb.setAttribute("aria-expanded", calOpen ? "true" : "false");
+    cb.addEventListener("click", function () { calOpen = !calOpen; try { localStorage.setItem("mission-map-cal", calOpen ? "1" : "0"); } catch (e) {} render(); fx("click"); });
+    el0.appendChild(cb);
+    renderWrap(days); renderCal(mine);
+  }
+  var MONTHN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  var calOpen = false, calM = null;
+  try { calOpen = localStorage.getItem("mission-map-cal") === "1"; } catch (e) {}
+  function renderCal(mine) {
+    var box = $("cal"); box.hidden = !(opts.week && calOpen); if (box.hidden) { $("evForm").hidden = true; return; }
+    if (!calM) { var n = new Date(); calM = { y: n.getFullYear(), m: n.getMonth() }; }
+    box.textContent = "";
+    var head = el("div", "calhead");
+    function nav(txt, label, dm) {
+      var b = el("button", "daybtn", txt); b.type = "button"; b.setAttribute("aria-label", label);
+      b.addEventListener("click", function () { var d = new Date(calM.y, calM.m + dm, 1); calM = { y: d.getFullYear(), m: d.getMonth() }; render(); fx("click"); });
+      return b;
+    }
+    head.appendChild(nav("‹", "Previous month", -1));
+    head.appendChild(el("b", "calttl", MONTHN[calM.m] + " " + calM.y));
+    head.appendChild(nav("›", "Next month", 1));
+    var tb = el("button", "daybtn", "Today"); tb.type = "button";
+    tb.addEventListener("click", function () { var n2 = new Date(); calM = { y: n2.getFullYear(), m: n2.getMonth() }; dayFilter = todayKey(); render(); fx("click"); });
+    head.appendChild(tb);
+    box.appendChild(head);
+    var grid = el("div", "calgrid"), t = todayKey();
+    DAYN.forEach(function (d) { grid.appendChild(el("span", "calwd", d)); });
+    var first = new Date(calM.y, calM.m, 1), lead = (first.getDay() + 6) % 7, dim = new Date(calM.y, calM.m + 1, 0).getDate();
+    var by = {}; mine.forEach(function (i) { (by[i.date] = by[i.date] || []).push(i); });
+    for (var s = 0; s < lead; s++) grid.appendChild(el("span", "calblank"));
+    for (var d = 1; d <= dim; d++) {
+      (function (day) {
+        var k = calM.y + "-" + pad(calM.m + 1) + "-" + pad(day), list = by[k] || [];
+        var open = list.filter(function (x) { return !x.done; }).length, all = list.length;
+        var b = el("button", "calday" + (k === t ? " today" : "") + (all && !open ? " alldone" : "") + (open && k < t ? " late" : "")); b.type = "button";
+        b.appendChild(el("span", "dn", String(day)));
+        var evs = eventsOn(k);
+        if (all || evs.length) {
+          var dr = el("span", "dr"), dots = el("span", "dots");
+          evs.slice(0, 3).forEach(function (e) { var i = el("i"); i.style.background = evHex(e.color); dots.appendChild(i); });
+          dr.appendChild(dots); if (all) dr.appendChild(el("b", "dc", open ? String(open) : "✓")); b.appendChild(dr);
+        }
+        b.setAttribute("aria-pressed", dayFilter === k ? "true" : "false");
+        b.setAttribute("aria-label", MONTHN[calM.m] + " " + day + ", " + (all ? open + " open of " + all + " missions" : "no missions") + ", " + evs.length + " events");
+        b.addEventListener("click", function () { dayFilter = dayFilter === k ? null : k; render(); fx("click"); });
+        grid.appendChild(b);
+      })(d);
+    }
+    box.appendChild(grid);
+    box.appendChild(agendaEl(dayFilter || t));
+    box.appendChild(el("div", "msg", dayFilter ? "Showing " + dayFilter + ". New missions go on that day. Tap it again to show all." : "Tap a day to show it and to plan missions for it."));
+  }
+  function renderWrap(days) {
+    var box = $("wrap"); box.hidden = !(opts.week && wrapOpen); if (box.hidden) return;
+    var counts = days.map(function () { return 0; }), total = 0, openLeft = 0;
+    norm().forEach(function (i) {
+      if (i.done && i.doneAt) { var idx = days.indexOf(dkey(new Date(i.doneAt))); if (idx >= 0) { counts[idx]++; total++; } }
+      if (!i.done && days.indexOf(i.date) >= 0) openLeft++;
+    });
+    var max = Math.max.apply(null, counts.concat([1])), best = counts.indexOf(Math.max.apply(null, counts));
+    box.innerHTML = "";
+    box.appendChild(el("h2", null, new Date().getDay() === 5 ? "Friday wrap-up" : "Week so far"));
+    var bars = el("div", "bars");
+    counts.forEach(function (c, i) {
+      var b = el("div", "bc"); b.appendChild(el("em", null, String(c)));
+      var bi = document.createElement("i"); bi.style.height = Math.round(c / max * 70) + "%"; b.appendChild(bi);
+      b.appendChild(el("span", null, DAYN[i])); bars.appendChild(b);
+    });
+    box.appendChild(bars);
+    box.appendChild(el("div", "wrapline", "Finished " + total + ". Still open this week: " + openLeft + "." + (total ? " Best day: " + DAYN[best] + " (" + counts[best] + ")." : "")));
+    var cl = el("button", "btn ghost", "Close"); cl.type = "button";
+    cl.addEventListener("click", function () { wrapOpen = false; render(); });
+    var row = el("div", "row-actions"); row.appendChild(cl); box.appendChild(row);
+  }
+  function renderRoad() {
+    var show = (opts.road || view === "racer") && !evil, box = $("road"); box.hidden = !show; if (!show) return;
+    var list = norm().slice(0, 14).reverse(), n = list.length, done = list.filter(function (i) { return i.done; }).length;
+    var cps = $("cps"); cps.innerHTML = "";
+    list.forEach(function (it, i) {
+      var c = el("i", "cp" + (it.done ? " done" : "")); c.style.left = ((i + 1) / (n + 1) * 100).toFixed(1) + "%"; cps.appendChild(c);
+    });
+    var pos = n ? (done / n) * 100 : 0;
+    $("bike").style.left = Math.max(3, Math.min(97, pos)).toFixed(1) + "%";
+    $("roadNote").textContent = n ? done + " of " + n + " checkpoints" : "Add a mission to start the road";
+  }
+
+  /* ---------- render ---------- */
+  function render() {
+    var mine = cur();
+    var done = mine.filter(function (i) { return i.done; }).length;
+    $("count").textContent = mine.length ? done + " of " + mine.length + (evil ? " resisted" : " done") : (evil ? "Nothing to resist" : "No missions yet");
+    document.body.dataset.view = view;
+    document.body.classList.toggle("evil", evil);
+    applyMedia();
+    $("pinBtn").setAttribute("aria-pressed", evil ? "true" : "false");
+    $("newText").placeholder = evil ? "Something you shouldn't do" : "New mission";
+    $("addBtn").textContent = evil ? "Jot down" : "Add";
+    $("day").textContent = dayName + (evil ? "" : "");
+    var tb = document.querySelectorAll("#themeGrid .tbtn");
+    for (var q = 0; q < tb.length; q++) tb[q].setAttribute("aria-pressed", tb[q].getAttribute("data-v") === view ? "true" : "false");
+    var showMap = view === "map" || opts.mapAll, grid = !!GRID[view];
+    $("mapcard").hidden = !showMap;
+    $("paper").hidden = grid;
+    $("notesList").hidden = !grid;
+    $("newBring").hidden = !opts.bring;
+    $("race").hidden = !opts.race || evil;
+
+    // map badges, fog, pins
+    Object.keys(PLACES).forEach(function (k) {
+      var g = document.querySelector('.place[data-p="' + k + '"]'); if (!g) return;
+      var here = mine.filter(function (i) { return i.place === k; });
+      var open = here.filter(function (i) { return !i.done; }).length;
+      var b = g.querySelector(".badge");
+      if (!here.length) b.innerHTML = "";
+      else if (open) b.innerHTML = '<circle class="bdg" r="9"/><text class="bdgt" y="4.5">' + open + '</text>';
+      else b.innerHTML = '<circle class="bdgx" r="9"/><path class="bdgm" d="M-4-4L4 4M4-4L-4 4"/>';
+      g.classList.toggle("sel", filter === k);
+      var fogged = opts.fog && !visited[k];
+      g.classList.toggle("fogged", fogged);
+      g.querySelector(".plabel").textContent = fogged ? "???" : PLACES[k].n;
+      g.setAttribute("aria-label", fogged ? "Unexplored place" : PLACES[k].n);
+    });
+    renderPins(mine);
+    $("pinCount").textContent = pins.length ? pins.length + (pins.length === 1 ? " pin" : " pins") : "No pins yet";
+    $("mapHint").textContent = dropping ? "tap the map to place your pin" : "tap a place to filter";
+    $("mapcard").classList.toggle("dropping", dropping);
+    $("dropBtn").textContent = dropping ? "Cancel pin" : "Drop a pin";
+    if (filter && isPinKey(filter) && !pinById(filter.slice(2))) filter = null;
+
+    var f = $("filter");
+    if (filter && showMap) {
+      f.hidden = false; f.innerHTML = "";
+      var c = el("button", "chip", placeInfo(filter).n + " ×"); c.type = "button";
+      c.addEventListener("click", function () { filter = null; render(); });
+      f.appendChild(c);
+      if (isPinKey(filter)) {
+        var rm = el("button", "chip", "Remove pin"); rm.type = "button";
+        rm.addEventListener("click", function () { removePin(filter.slice(2)); });
+        f.appendChild(rm);
+      }
+    } else { f.hidden = true; }
+    var title = view === "receipt" ? "MISSION MAP" : view === "errands" ? dayName + " errands" : evil ? "Shouldn't-do list" : "Missions";
+    if (filter && showMap && view !== "receipt") title += ": " + placeInfo(filter).n;
+    $("listTitle").textContent = title;
+
+    var list = $("list"), notes = $("notesList");
+    list.innerHTML = ""; notes.innerHTML = "";
+    var shown = mine;
+    if (filter && showMap) shown = shown.filter(function (i) { return i.place === filter; });
+    if (opts.week && dayFilter) shown = shown.filter(function (i) { return i.date === dayFilter; });
+    if (opts.doneBottom) shown = shown.filter(function (i) { return !i.done; }).concat(shown.filter(function (i) { return i.done; }));
+    if (!shown.length) {
+      var e = el("li", "empty", mine.length ? "Nothing here. Pick another place or day." : (evil ? "Nothing to resist. Write down a temptation." : "Nothing to do. Add a mission or tap Suggest."));
+      (grid ? notes : list).appendChild(e);
+    }
+    if (!grid) shown.forEach(function (it) { list.appendChild(rowEl(it)); });
+    else shown.forEach(function (it) {
+      var n = rowEl(it); n.className = "note" + (it.done ? " done" : "");
+      var wrapper = el("div", "item");
+      while (n.firstChild) wrapper.appendChild(n.firstChild);
+      n.appendChild(wrapper); notes.appendChild(n);
+    });
+    $("rcDate").textContent = new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    $("rcItems").textContent = "ITEMS " + mine.length; $("rcDone").textContent = "DONE " + done;
+
+    var stops = norm().filter(function (i) { return !i.done && i.where; }).slice(0, 10).map(function (i) { return encodeURIComponent(i.where); });
+    var rb = $("routeBtn");
+    if (stops.length) {
+      rb.hidden = false;
+      rb.textContent = "Plan route (" + stops.length + (stops.length === 1 ? " stop)" : " stops)");
+      rb.href = "https://www.google.com/maps/dir/?api=1&destination=" + stops[stops.length - 1] + (stops.length > 1 ? "&waypoints=" + stops.slice(0, -1).join("%7C") : "");
+    } else { rb.hidden = true; rb.removeAttribute("href"); }
+    $("sample").hidden = !(!grid && items.some(function (i) { return i.sample; }));
+
+    renderMeters(); renderWeek(mine); renderRoad(); renderNext();
+    if ($("options") && !$("options").hidden) renderAch();
+
+    if (lastToggled) {
+      var id = lastToggled; lastToggled = null;
+      var tel = document.querySelector('.t[data-id="' + id + '"]');
+      var it2 = items.filter(function (i) { return i.id === id; })[0];
+      if (tel && it2 && it2.done) requestAnimationFrame(function () { requestAnimationFrame(function () { tel.classList.add("struck"); }); });
+    }
+    if (lastAdded) {
+      var la = list.querySelector('[data-id="' + lastAdded + '"]'); lastAdded = null;
+      if (la && view === "receipt" && opts.print && !isReduced()) {
+        la.classList.add("printing");
+        la.addEventListener("animationend", function ae(ev) { if (ev.target === la) { la.classList.remove("printing"); la.removeEventListener("animationend", ae); } });
+      }
+    }
+  }
+  var dayName = "Today";
+  try { dayName = new Date().toLocaleDateString("en-US", { weekday: "long" }); } catch (e) {}
+
+  /* ---------- actions ---------- */
+  function payFor(it) { return it.evil ? 5 : 10 + (it.date === todayKey() ? 5 : 0); }
+  function toggle(id) {
+    var it = null;
+    items.forEach(function (i) { if (i.id === id) it = i; });
+    if (!it) return;
+    it.done = !it.done; it.doneAt = it.done ? Date.now() : 0; lastToggled = id;
+    var gained = 0;
+    if (it.done) {
+      if (!it.evil) visited[it.place] = true;
+      if (!it.paid) { it.paid = true; gained = payFor(it); stats.cash += gained; }
+    }
+    render(); persist();
+    if (it.done) {
+      fx("scribble");
+      if (gained && opts.rank) toast("+$" + gained);
+      var mine = cur();
+      if (mine.length > 1 && mine.every(function (i) { return i.done; })) fx("chime", 0.4);
+    } else fx("untick");
+    checkAch(); checkRace();
+  }
+  function remove(id) { items = items.filter(function (i) { return i.id !== id; }); dropPic(id); render(); persist(); fx("del"); }
+  function add(text, place, where, bring) {
+    text = (text || "").trim(); if (!text) return;
+    var it = cleanItem({ id: uid(), text: text, place: place, where: where, bring: bring, evil: evil, date: (opts.week && dayFilter) || todayKey() }, false);
+    if (!it) return;
+    if (!evil && opts.hassles && Math.random() < 0.35) it.hassle = HASSLES[Math.floor(Math.random() * HASSLES.length)];
+    items.unshift(it); lastAdded = it.id;
+    render(); persist();
+    fx(view === "receipt" && opts.print ? "print" : "add");
+  }
+  function removePin(id) {
+    pins = pins.filter(function (p) { return p.id !== id; });
+    items.forEach(function (i) { if (i.place === "p:" + id) i.place = "home"; });
+    delete visited["p:" + id];
+    filter = null; fillSelect(); render(); persist(); fx("del");
+  }
+  function flipEvil() {
+    evil = !evil; try { localStorage.setItem(EKEY, evil ? "1" : "0"); } catch (e) {}
+    filter = null; render(); fx("flip");
+    musicRefresh();
+  }
+  function setView(v) {
+    view = v; try { localStorage.setItem(VKEY, v); } catch (e) {}
+    render(); fx("click");
+    musicRefresh();
+  }
+  function toast(msg) {
+    var t = $("toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true; }, 3200);
+  }
+
+  /* ---------- achievements ---------- */
+  var ACH = [
+    { id: "first", n: "First one down", d: "Finish any mission.", f: function (c) { return c.done >= 1; } },
+    { id: "post", n: "Post Office Regular", d: "Finish 3 missions at the Post Office.", f: function (c) { return (c.at.post || 0) >= 3; } },
+    { id: "noon", n: "Three before noon", d: "Finish 3 missions before 12:00 on one day.", f: function (c) { return c.noon >= 3; } },
+    { id: "sweep", n: "Clean sweep", d: "Finish everything on a list of 3 or more.", f: function (c) { return c.total >= 3 && c.done === c.total; } },
+    { id: "owl", n: "Night shift", d: "Finish a mission after 23:00.", f: function (c) { return c.late >= 1; } },
+    { id: "tourist", n: "Seen the whole town", d: "Visit all 8 places.", f: function (c) { return c.visited >= 8; } },
+    { id: "will", n: "Willpower", d: "Resist 3 things on the shouldn't-do list.", f: function (c) { return c.resisted >= 3; } },
+    { id: "photo", n: "Photo finish", d: "Win a race against the clock.", f: function (c) { return c.races >= 1; } }
+  ];
+  function achCtx() {
+    var c = { done: 0, total: 0, at: {}, noon: 0, late: 0, visited: 0, resisted: 0, races: stats.races }, perDay = {};
+    norm().forEach(function (i) {
+      c.total++;
+      if (!i.done) return;
+      c.done++; c.at[i.place] = (c.at[i.place] || 0) + 1;
+      if (i.doneAt) { var d = new Date(i.doneAt), h = d.getHours(); if (h < 12) { var k = dkey(d); perDay[k] = (perDay[k] || 0) + 1; } if (h >= 23) c.late++; }
+    });
+    Object.keys(perDay).forEach(function (k) { if (perDay[k] > c.noon) c.noon = perDay[k]; });
+    Object.keys(PLACES).forEach(function (k) { if (visited[k]) c.visited++; });
+    items.forEach(function (i) { if (i.evil && i.done) c.resisted++; });
+    return c;
+  }
+  function checkAch() {
+    var c = achCtx(), got = [];
+    ACH.forEach(function (a) { if (!stats.unlocked[a.id] && a.f(c)) { stats.unlocked[a.id] = Date.now(); got.push(a.n); } });
+    if (got.length) { persist(); toast("Achievement: " + got.join(", ")); fx("chime", 0.25); renderAch(); }
+  }
+  function renderAch() {
+    var ul = $("achList"); ul.innerHTML = "";
+    ACH.forEach(function (a) {
+      var li = el("li", stats.unlocked[a.id] ? "" : "lock");
+      li.appendChild(el("b", null, a.n)); li.appendChild(el("small", null, a.d)); ul.appendChild(li);
+    });
+  }
+
+  /* ---------- race the clock ---------- */
+  function fmt(s) { return pad(Math.floor(s / 60)) + ":" + pad(s % 60); }
+  function findItem(id) { for (var i = 0; i < items.length; i++) if (items[i].id === id) return items[i]; return null; }
+  function startRace() {
+    var open = norm().filter(function (i) { return !i.done; });
+    if (!open.length) { $("raceMsg").textContent = "Add a mission first."; return; }
+    var mins = parseInt($("raceMin").value, 10) || 40;
+    race = { start: Date.now(), end: Date.now() + mins * 60000, ids: open.map(function (i) { return i.id; }), total: open.length };
+    $("raceIdle").hidden = true; $("raceRun").hidden = false; $("raceMsg").textContent = "";
+    clearInterval(raceTimer); raceTimer = setInterval(raceTick, 500); raceTick(); fx("click");
+  }
+  function racePending() { return race.ids.filter(function (id) { var it = findItem(id); return it && !it.done; }); }
+  function raceTick() {
+    if (!race) return;
+    var left = Math.max(0, Math.ceil((race.end - Date.now()) / 1000));
+    $("raceTime").textContent = fmt(left); $("raceTime").classList.toggle("low", left <= 60);
+    $("raceInfo").textContent = (race.total - racePending().length) + " of " + race.total + " cleared";
+    if (left <= 0) endRace(false, "Time's up.");
+  }
+  function checkRace() {
+    if (!race) return;
+    if (Date.now() >= race.end) { endRace(false, "Time's up."); return; }
+    raceTick();
+    if (race && !racePending().length) endRace(true);
+  }
+  function endRace(won, msg) {
+    var r = race; if (!r) return;
+    race = null; clearInterval(raceTimer);
+    $("raceIdle").hidden = false; $("raceRun").hidden = true;
+    if (won) {
+      var secs = Math.max(1, Math.round((Date.now() - r.start) / 1000)), key = String(r.total), prev = stats.best[key], nb = !prev || secs < prev;
+      if (nb) stats.best[key] = secs;
+      stats.races++; stats.cash += 25;
+      $("raceMsg").textContent = "Cleared " + r.total + " in " + fmt(secs) + (nb ? ". New best!" : ". Best: " + fmt(prev) + ".") + " +$25.";
+      fx("chime"); persist(); render(); checkAch();
+    } else { $("raceMsg").textContent = msg || "Race cancelled."; if (msg) fx("del"); }
+  }
+  $("raceGo").addEventListener("click", startRace);
+  $("raceStop").addEventListener("click", function () { endRace(false, "Race cancelled."); });
+
+  /* ---------- wiring: add form, map, pin ---------- */
+  $("addForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    add($("newText").value, $("newPlace").value, $("newWhere").value, $("newBring").value);
+    $("newText").value = ""; $("newWhere").value = ""; $("newBring").value = "";
+  });
+  $("pinBtn").addEventListener("click", flipEvil);
+  $("clearSamples").addEventListener("click", function () { items = items.filter(function (i) { return !i.sample; }); render(); persist(); });
+  function toggleFilter(k) { filter = filter === k ? null : k; render(); }
+  $("map").addEventListener("click", function (e) {
+    var g = e.target.closest ? e.target.closest(".place") : null;
+    if (dropping) {
+      if (g) return;
+      var r = $("map").getBoundingClientRect(); if (!r.width) return;
+      tempPin = { x: Math.round((e.clientX - r.left) / r.width * 400), y: Math.round((e.clientY - r.top) / r.height * 300) };
+      $("pinForm").hidden = false; $("pinName").value = ""; $("pinName").focus(); render();
+      return;
+    }
+    if (g) toggleFilter(g.getAttribute("data-p"));
+  });
+  $("map").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    var g = e.target.closest ? e.target.closest(".place") : null; if (!g || dropping) return;
+    e.preventDefault(); toggleFilter(g.getAttribute("data-p"));
+  });
+  $("dropBtn").addEventListener("click", function () { dropping = !dropping; tempPin = null; $("pinForm").hidden = true; render(); });
+  $("pinCancel").addEventListener("click", function () { dropping = false; tempPin = null; $("pinForm").hidden = true; render(); });
+  $("pinForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!tempPin) return;
+    if (pins.length >= 30) { toast("That is the pin limit."); return; }
+    var id = uid().slice(0, 8), name = str($("pinName").value, 24) || "Pin " + (pins.length + 1);
+    pins.push({ id: id, name: name, x: Math.max(8, Math.min(392, tempPin.x)), y: Math.max(14, Math.min(286, tempPin.y)) });
+    dropping = false; tempPin = null; $("pinForm").hidden = true;
+    fillSelect(); $("newPlace").value = "p:" + id;
+    render(); persist(); fx("pin"); toast("Pin saved. It is selected in the Where list.");
+  });
+  $("refog").addEventListener("click", function () { visited = {}; stats.fogFrom = Date.now(); persist(); render(); $("mapMsg").textContent = "The fog is back. Finish a mission somewhere to clear it."; });
+
+  /* ---------- backup: export / import ---------- */
+  var dl = null;
+  function exportJson() {
+    return JSON.stringify({
+      app: "mission-map", version: 3, exported: new Date().toISOString(),
+      items: items.map(function (i) { return { id: i.id, text: i.text, place: i.place, where: i.where, bring: i.bring, hassle: i.hassle, done: i.done, evil: i.evil, paid: i.paid, date: i.date, doneAt: i.doneAt }; }),
+      pins: pins, visited: visited, stats: stats,
+      events: events.filter(function (x) { return x.src !== "device"; }).map(function (x) { var c = {}; Object.keys(x).forEach(function (k) { if (k !== "ext" && k !== "src") c[k] = x[k]; }); return c; })
+    }, null, 2);
+  }
+  function bkMsg(t) { $("bkMsg").textContent = t; }
+  $("backup").addEventListener("toggle", function () { if (this.open) { $("jsonBox").value = exportJson(); bkMsg(""); $("saveJson").hidden = !dl; } });
+  $("saveJson").addEventListener("click", function () {
+    if (!dl) return;
+    var stamp = todayKey();
+    dl.save({ filename: "missions-" + stamp + ".json", data: exportJson() }).then(function () { bkMsg("Saved."); })
+      .catch(function (e) { bkMsg(e && e.code === "declined" ? "Save cancelled." : "Could not save a file here. Use Copy instead."); });
+  });
+  $("copyJson").addEventListener("click", function () {
+    var box = $("jsonBox"); box.focus(); box.select();
+    var ok = false;
+    try { navigator.clipboard.writeText(box.value).then(function () { bkMsg("Copied."); }, function () { bkMsg("Text is selected. Copy it manually."); }); ok = true; } catch (e) {}
+    if (!ok) bkMsg("Text is selected. Copy it manually.");
+  });
+  function importText(txt) {
+    var data;
+    try { data = JSON.parse(txt); } catch (e) { bkMsg("That is not valid JSON."); return; }
+    var arr = Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : (data && Array.isArray(data.events) ? [] : null));
+    if (!arr) { bkMsg("No missions found. Expected a list or an object with an items list."); return; }
+    var clean = arr.slice(0, 500).map(function (r) { return cleanItem(r, false); }).filter(Boolean);
+    var inEv = (!Array.isArray(data) && Array.isArray(data.events)) ? cleanEvents(data.events).map(function (x) { x.ext = null; x.src = ""; return x; }) : [];
+    if (!clean.length && !inEv.length) { bkMsg("No usable missions or events in that file."); return; }
+    var rep = $("replace").checked, added;
+    var inPins = (!Array.isArray(data) && Array.isArray(data.pins)) ? cleanPins(data.pins) : [];
+    if (rep) {
+      items = clean; added = clean.length; events = inEv;
+      if (!Array.isArray(data)) { pins = inPins; visited = cleanVisited(data.visited); if (data.stats) stats = cleanStats(data.stats); }
+    } else {
+      var have = {}; items.forEach(function (i) { have[i.id] = 1; });
+      var fresh = clean.filter(function (i) { return !have[i.id]; });
+      items = fresh.concat(items); added = fresh.length;
+      var he = {}; events.forEach(function (x) { he[x.id] = 1; });
+      inEv.forEach(function (x) { if (!he[x.id] && events.length < 500) events.push(x); });
+      var hp = {}; pins.forEach(function (p) { hp[p.id] = 1; });
+      inPins.forEach(function (p) { if (!hp[p.id] && pins.length < 30) pins.push(p); });
+      if (!Array.isArray(data) && data.visited) { var iv = cleanVisited(data.visited); Object.keys(iv).forEach(function (k) { visited[k] = true; }); }
+    }
+    markVisitedFromItems(); fillSelect(); render(); persist();
+    $("jsonBox").value = exportJson();
+    bkMsg((rep ? "Replaced with " + added + " missions" : "Added " + added + " new missions") + (inEv.length ? " and " + inEv.length + " events." : "."));
+  }
+  $("importPasted").addEventListener("click", function () { importText($("jsonBox").value); });
+  $("fileIn").addEventListener("change", function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function () { importText(String(rd.result)); };
+    rd.onerror = function () { bkMsg("Could not read that file."); };
+    rd.readAsText(f);
+    this.value = "";
+  });
+  if (window.claude && window.claude.use) { window.claude.use("downloads").then(function (d) { dl = d; if ($("backup").open) $("saveJson").hidden = !dl; }).catch(function () {}); }
+
+  /* ---------- suggestions ---------- */
+  function suggest() {
+    var have = items.map(function (i) { return i.text.toLowerCase(); });
+    var src = evil ? POOL_EVIL : POOL;
+    var pool = src.filter(function (p) { return have.indexOf(p[0].toLowerCase()) < 0; });
+    for (var i = pool.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+    var pick = pool.slice(0, 3), box = $("sug");
+    box.innerHTML = ""; box.hidden = false;
+    box.appendChild(el("h2", null, evil ? "Temptations to resist" : "Suggested missions"));
+    if (!pick.length) box.appendChild(el("div", null, "All suggestions are already on your list."));
+    pick.forEach(function (p) {
+      var r = el("div", "sug"), s = el("span");
+      s.appendChild(el("span", "hand", p[0])); s.appendChild(el("small", null, PLACES[p[1]].n));
+      var btn = el("button", "btn", "Add"); btn.type = "button";
+      btn.addEventListener("click", function () { add(p[0], p[1]); suggest(); });
+      r.appendChild(s); r.appendChild(btn); box.appendChild(r);
+    });
+    var row = el("div", "row-actions");
+    var sh = el("button", "btn ghost", "Shuffle"); sh.type = "button"; sh.addEventListener("click", suggest);
+    var cl = el("button", "btn ghost", "Close"); cl.type = "button"; cl.addEventListener("click", function () { box.hidden = true; });
+    row.appendChild(sh); row.appendChild(cl); box.appendChild(row);
+    try { box.scrollIntoView({ block: "nearest", behavior: opts.reduce ? "auto" : "smooth" }); } catch (e) {}
+  }
+  $("sugBtn").addEventListener("click", suggest);
+
+  /* ---------- sound: effects and music, all synthesized in the page ---------- */
+  var AC = null, sfxBus = null, musBus = null, noiseBuf = null, sfxBufs = {};
+  var snd = { sfx: true, music: false, vol: 0.5 };
+  var mus = { timer: null, step: 0, next: 0, bus: null, dly: null, el: null, node: null, url: null, cur: null, custom: false, tok: 0, order: [], pos: 0, fails: 0 };
+  try {
+    var sv = JSON.parse(localStorage.getItem("mission-map-snd") || "null");
+    if (sv) { snd.sfx = sv.sfx !== false; snd.music = !!sv.music; if (typeof sv.vol === "number") snd.vol = Math.min(1, Math.max(0, sv.vol)); }
+  } catch (e) {}
+  function saveSnd() { try { localStorage.setItem("mission-map-snd", JSON.stringify(snd)); } catch (e) {} }
+  function setMusVol() { if (musBus) musBus.gain.value = snd.vol * (mus.custom ? 1 : 0.3); }
+  function audio() {
+    if (!AC) {
+      var C = window.AudioContext || window.webkitAudioContext; if (!C) return null;
+      try { AC = new C(); } catch (e) { return null; }
+      sfxBus = AC.createGain(); sfxBus.gain.value = 0.7; sfxBus.connect(AC.destination);
+      musBus = AC.createGain(); musBus.connect(AC.destination); setMusVol();
+      noiseBuf = AC.createBuffer(1, AC.sampleRate, AC.sampleRate);
+      var d = noiseBuf.getChannelData(0); for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      setTimeout(function () { preloadSfx(); }, 0);
+    }
+    if (AC.state === "suspended") AC.resume();
+    return AC;
+  }
+  function env(g, t, a, peak, d) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + a);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
+  }
+  function tone(type, f0, f1, t, dur, peak, dest) {
+    var o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    env(g, t, 0.005, peak, dur); o.connect(g); g.connect(dest || sfxBus); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function noise(t, dur, type, f0, f1, peak, q, dest) {
+    var s = AC.createBufferSource(); s.buffer = noiseBuf;
+    var f = AC.createBiquadFilter(); f.type = type; f.Q.value = q || 1;
+    f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    var g = AC.createGain(); env(g, t, Math.min(0.02, dur / 4), peak, dur);
+    s.connect(f); f.connect(g); g.connect(dest || sfxBus); s.start(t); s.stop(t + dur + 0.05);
+  }
+  var FX = {
+    scribble: function (t) { noise(t, 0.14, "bandpass", 1800, 3200, 0.5, 2); noise(t + 0.12, 0.14, "bandpass", 3200, 1500, 0.45, 2); noise(t + 0.24, 0.12, "bandpass", 1500, 2800, 0.35, 2); },
+    untick: function (t) { tone("sine", 420, 260, t, 0.12, 0.3); },
+    add: function (t) { noise(t, 0.1, "highpass", 3000, 6000, 0.18, 0.7); tone("triangle", 520, 780, t + 0.03, 0.12, 0.25); },
+    del: function (t) { tone("sine", 150, 55, t, 0.2, 0.5); noise(t, 0.06, "lowpass", 900, 300, 0.25, 0.7); },
+    click: function (t) { tone("square", 900, 700, t, 0.04, 0.08); },
+    scratch: function (t) { noise(t, 0.16, "bandpass", 2000, 3600, 0.3, 2); noise(t + 0.1, 0.1, "bandpass", 3400, 1800, 0.22, 2); },
+    chime: function (t) { [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) { tone("triangle", f, f * 1.002, t + i * 0.09, 0.5, 0.22); }); },
+    print: function (t) { for (var i = 0; i < 9; i++) noise(t + i * 0.085, 0.05, "bandpass", 2600, 1900, 0.2, 3); noise(t + 0.78, 0.1, "highpass", 3500, 6500, 0.2, 0.7); },
+    flip: function (t) { noise(t, 0.3, "bandpass", 500, 2400, 0.28, 1.4); tone("sawtooth", 200, 70, t + 0.05, 0.3, 0.16); },
+    pin: function (t) { tone("sine", 1000, 320, t, 0.09, 0.3); tone("sine", 180, 90, t + 0.05, 0.12, 0.4); }
+  };
+  function fx(name, delay) {
+    if (!snd.sfx || !audio()) return;
+    var own = sfxBufs[name];
+    if (own) { try { var s = AC.createBufferSource(); s.buffer = own; s.connect(sfxBus); s.start(AC.currentTime + (delay || 0) + 0.01); } catch (e) {} return; }
+    try { FX[name](AC.currentTime + (delay || 0) + 0.01); } catch (e) {}
+  }
+
+  /* original generative loops: slow chords, sparse plucks, a little tape wobble and dust; two stations add a beat */
+  var MUS = {
+    map:     { root: 45, tempo: 66, pent: [0, 3, 5, 7, 10], prog: [[0, [0, 3, 7]], [-4, [0, 4, 7]], [3, [0, 4, 7]], [-2, [0, 4, 7]]] },
+    notes:   { root: 48, tempo: 84, pent: [0, 2, 4, 7, 9],  prog: [[0, [0, 4, 7]], [7, [0, 4, 7]], [9, [0, 3, 7]], [5, [0, 4, 7]]] },
+    errands: { root: 50, tempo: 58, pent: [0, 3, 5, 7, 10], prog: [[0, [0, 3, 7]], [5, [0, 3, 7]], [-2, [0, 4, 7]], [-5, [0, 3, 7]]] },
+    highway: { root: 45, tempo: 118, pent: [0, 3, 5, 7, 10], prog: [[0, [0, 3, 7]], [-4, [0, 4, 7]], [-2, [0, 4, 7]], [-7, [0, 3, 7]]], drive: true },
+    pit:     { root: 48, tempo: 104, pent: [0, 2, 4, 7, 9],  prog: [[0, [0, 4, 7]], [5, [0, 4, 7]], [7, [0, 4, 7]], [5, [0, 4, 7]]], drive: true }
+  };
+  var STATION_AUTO = { map: "map", notes: "notes", errands: "errands", racer: "highway", zine: "notes", wanted: "errands", receipt: "notes", comic: "pit" };
+  function stationKey() {
+    var k = opts.station === "auto" ? (evil ? "errands" : (STATION_AUTO[view] || "map")) : opts.station;
+    return MUS[k] ? k : "map";
+  }
+  function mf(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+  function padChord(t, len, base, notes) {
+    var lp = AC.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 650;
+    var g = AC.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.1, t + 1.4);
+    g.gain.setValueAtTime(0.1, t + len - 0.2); g.gain.linearRampToValueAtTime(0.0001, t + len + 1.4);
+    lp.connect(g); g.connect(mus.bus);
+    var lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = 0.35; lg.gain.value = 9; lfo.connect(lg);
+    lfo.start(t); lfo.stop(t + len + 1.5);
+    notes.forEach(function (n) {
+      [-7, 7].forEach(function (c) {
+        var o = AC.createOscillator(); o.type = "sawtooth"; o.frequency.value = mf(base + n); o.detune.value = c;
+        lg.connect(o.detune); o.connect(lp); o.start(t); o.stop(t + len + 1.5);
+      });
+    });
+  }
+  function pluck(t, m) {
+    var o = AC.createOscillator(), lp = AC.createBiquadFilter(), g = AC.createGain(), send = AC.createGain();
+    o.type = "triangle"; o.frequency.value = mf(m); lp.type = "lowpass"; lp.frequency.value = 1800;
+    env(g, t, 0.006, 0.16, 0.9); send.gain.value = 0.5;
+    o.connect(lp); lp.connect(g); g.connect(mus.bus); g.connect(send); send.connect(mus.dly);
+    o.start(t); o.stop(t + 1);
+  }
+  function stepAt(th, sd, t, s) {
+    var ch = th.prog[Math.floor(s / 16) % th.prog.length];
+    if (s % 16 === 0) padChord(t, sd * 16, th.root + ch[0] + 12, ch[1]);
+    if (s % 8 === 0 || s % 8 === 6) tone("sine", mf(th.root + ch[0]), mf(th.root + ch[0]) * 0.99, t, sd * 3, 0.5, mus.bus);
+    if (s % 2 === 0 && s % 16 < 13 && Math.random() < 0.3) pluck(t, th.root + 24 + th.pent[Math.floor(Math.random() * th.pent.length)] + (Math.random() < 0.3 ? 12 : 0));
+    if (Math.random() < 0.12) noise(t + Math.random() * sd, 0.012, "highpass", 4000, 6000, 0.05, 0.5, mus.bus);
+    if (th.drive) {
+      if (s % 4 === 0) tone("sine", 140, 45, t, 0.18, 0.9, mus.bus);
+      if (s % 2 === 1) noise(t, 0.03, "highpass", 7000, 9000, 0.05, 0.5, mus.bus);
+      if (s % 2 === 0) pluck(t, th.root + ch[0] + 24 + ch[1][(s / 2) % 3] + (s % 8 >= 4 ? 12 : 0));
+    }
+  }
+  function startGen() {
+    stopMusic();
+    var th = MUS[stationKey()], sd = 60 / th.tempo / 2;
+    mus.bus = AC.createGain(); mus.bus.connect(musBus);
+    mus.dly = AC.createDelay(2); mus.dly.delayTime.value = sd * 3;
+    var fb = AC.createGain(); fb.gain.value = 0.36; mus.dly.connect(fb); fb.connect(mus.dly); mus.dly.connect(mus.bus);
+    mus.step = 0; mus.next = AC.currentTime + 0.1;
+    mus.timer = setInterval(function () {
+      while (mus.next < AC.currentTime + 0.4) { stepAt(th, sd, mus.next, mus.step); mus.next += sd; mus.step++; }
+    }, 100);
+  }
+  function stopMusic() {
+    if (mus.timer) { clearInterval(mus.timer); mus.timer = null; }
+    if (mus.bus && AC) { var b = mus.bus; b.gain.setTargetAtTime(0, AC.currentTime, 0.2); setTimeout(function () { try { b.disconnect(); } catch (e) {} }, 1500); mus.bus = null; }
+    mus.tok++; dropEl();
+  }
+  function dropEl() {
+    if (mus.el) { try { mus.el.onended = null; mus.el.onerror = null; mus.el.pause(); mus.el.removeAttribute("src"); mus.el.load(); } catch (e) {} mus.el = null; }
+    if (mus.node) { try { mus.node.disconnect(); } catch (e) {} mus.node = null; }
+    if (mus.url) { try { URL.revokeObjectURL(mus.url); } catch (e) {} mus.url = null; }
+  }
+  function startMusic() {
+    if (!audio()) return;
+    stopMusic();
+    var want = desiredMusic(); mus.cur = want;
+    mus.custom = want.indexOf("gen:") !== 0; setMusVol();
+    if (!mus.custom) startGen();
+    else if (want === "pl") playPl(true);
+    else playBlobKey("mt:" + view, true, null, mus.tok);
+    updateAd();
+  }
+  function sndMsg(t) { $("sndMsg").textContent = t; }
+  var adIdx = 0;
+  function updateAd(rotate) {
+    var b = $("adBox"), on = !!(opts.ads && snd.music && AC && !mus.custom && mus.timer);
+    b.hidden = !on;
+    if (on) { if (rotate) adIdx++; b.textContent = "Ad break: " + ADS[adIdx % ADS.length]; }
+    renderMeters();
+  }
+  setInterval(function () { updateAd(true); }, 22000);
+
+  /* ---------- options menu ---------- */
+  var opts = { scribble: false, wobble: true, strike: true, tilt: true, reduce: false, doneBottom: false, tags: true, mode: "auto",
+    print: true, week: true, hassles: true, stress: true, bring: false, rank: true, race: true, road: false, station: "auto", ads: true,
+    fog: true, moving: false, mapAll: false, wobAll: true };
+  var modeTouched = false;
+  try {
+    var ov = JSON.parse(localStorage.getItem("mission-map-opts") || "null");
+    if (ov) Object.keys(opts).forEach(function (k) { if (typeof ov[k] === typeof opts[k]) opts[k] = ov[k]; });
+    if (!MUS[opts.station] && opts.station !== "auto") opts.station = "auto";
+  } catch (e) {}
+  function saveOpts() { try { localStorage.setItem("mission-map-opts", JSON.stringify(opts)); } catch (e) {} }
+  var BOXES = [["scrOn", "scribble"], ["wobOn", "wobble"], ["strOn", "strike"], ["tiltOn", "tilt"], ["calmOn", "reduce"], ["botOn", "doneBottom"], ["tagOn", "tags"],
+    ["prtOn", "print"], ["weekOn", "week"], ["hasOn", "hassles"], ["strsOn", "stress"], ["brOn", "bring"], ["rankOn", "rank"], ["raceOn", "race"],
+    ["roadOn", "road"], ["adsOn", "ads"], ["fogOn", "fog"], ["movOn", "moving"], ["mapAllOn", "mapAll"], ["wobAllOn", "wobAll"]];
+  function applyOpts() {
+    var c = document.body.classList;
+    c.toggle("wob", opts.wobble); if (opts.wobble) { startWob(); wobTick(); } else stopWob();
+    c.toggle("no-strike", !opts.strike); c.toggle("flat", !opts.tilt); c.toggle("calm", opts.reduce); c.toggle("hide-tags", !opts.tags); c.toggle("no-print", !opts.print);
+    var de = document.documentElement;
+    if (opts.mode === "auto") { if (modeTouched) de.removeAttribute("data-theme"); } else de.setAttribute("data-theme", opts.mode);
+    [["cmAuto", "auto"], ["cmLight", "light"], ["cmDark", "dark"]].forEach(function (p) { $(p[0]).setAttribute("aria-pressed", opts.mode === p[1]); });
+    buildTraffic(); updateSky();
+  }
+  function syncOpts() {
+    $("sfxOn").checked = snd.sfx; $("musOn").checked = snd.music; $("vol").value = Math.round(snd.vol * 100);
+    BOXES.forEach(function (b) { $(b[0]).checked = !!opts[b[1]]; });
+    $("station").value = opts.station;
+    renderAch();
+  }
+  BOXES.forEach(function (b) {
+    $(b[0]).addEventListener("change", function () { opts[b[1]] = this.checked; saveOpts(); applyOpts(); render(); updateAd(); });
+  });
+  $("station").addEventListener("change", function () { opts.station = this.value; saveOpts(); musicRefresh(); });
+  [["cmAuto", "auto"], ["cmLight", "light"], ["cmDark", "dark"]].forEach(function (p) {
+    $(p[0]).addEventListener("click", function () { modeTouched = true; opts.mode = p[1]; saveOpts(); applyOpts(); });
+  });
+  (function buildThemeGrid() {
+    var tg = $("themeGrid");
+    THEMES.forEach(function (t) {
+      var b = el("button", "tbtn", t[1]); b.type = "button"; b.setAttribute("data-v", t[0]); b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function () { setView(t[0]); });
+      tg.appendChild(b);
+    });
+  })();
+  $("optBtn").addEventListener("click", function () {
+    var o = $("options"); o.hidden = !o.hidden;
+    this.setAttribute("aria-expanded", String(!o.hidden)); if (!o.hidden) syncOpts();
+  });
+  $("optClose").addEventListener("click", function () { $("options").hidden = true; $("optBtn").setAttribute("aria-expanded", "false"); });
+
+  /* wobbly hand-drawn borders: each button gets a rough rectangle that is redrawn a few times a second */
+  var wobTimer = null;
+  function roughPath(w, h) {
+    function j(a) { return (Math.random() - 0.5) * 2 * a; }
+    var m = 2;
+    var p = [
+      [-m + j(1.5), -m + j(1.5)], [w / 2 + j(3), -m + j(1.8)], [w + m + j(1.5), -m + j(1.5)],
+      [w + m + j(1.8), h / 2 + j(3)], [w + m + j(1.5), h + m + j(1.5)], [w / 2 + j(3), h + m + j(1.8)],
+      [-m + j(1.5), h + m + j(1.5)], [-m + j(1.8), h / 2 + j(3)], [-m + 2 + j(1.5), -m + 5 + j(1.5)]
+    ];
+    return "M" + p.map(function (q) { return q[0].toFixed(1) + " " + q[1].toFixed(1); }).join(" L");
+  }
+  var WA_SEL = ".seg,.sug,.suggest,.mapcard,.paper,.note,.box,.tbtn,.rankbox,.stress .meter,.daybtn,.lane,.toast,.mapbar,.pinform,.pinform input,.dash,.thumb,.pic,.cal,.calday,.opts details,.opts select,.add input,.add select,.suggest textarea,.stamp,.go,.pinbtn,.evform,.evform input,.evform select,.evform textarea";
+  var waSvg = null, waTick = 0;
+  function waOn() { return opts.wobble && opts.wobAll; }
+  function wobAllTick() {
+    if (!waOn()) { wobAllOff(); return; }
+    var b = document.body, still = isReduced();
+    if (!waSvg) { waSvg = svgEl("svg", { "class": "wobAll", "aria-hidden": "true" }); b.appendChild(waSvg); }
+    waTick++;
+    var de = document.documentElement;
+    waSvg.style.width = Math.max(de.scrollWidth, window.innerWidth) + "px"; waSvg.style.height = Math.max(de.scrollHeight, window.innerHeight) + "px";
+    /* read the real border colours with the hiding switched off, then switch it back on before anything paints */
+    b.classList.remove("wob-all");
+    var els = document.querySelectorAll(WA_SEL), sx = window.pageXOffset, sy = window.pageYOffset, info = [], i;
+    for (i = 0; i < els.length; i++) {
+      var e0 = els[i], w = e0.offsetWidth, h = e0.offsetHeight; if (!w || !h) { e0.removeAttribute("data-wa"); continue; }
+      var cs = getComputedStyle(e0), bw = [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].map(parseFloat);
+      var col = cs.borderTopColor;
+      if (!(bw[0] >= 1 && bw[1] >= 1 && bw[2] >= 1 && bw[3] >= 1) || cs.borderTopStyle === "none" || /rgba\(.*,\s*0\)$/.test(col) || col === "transparent" || cs.visibility === "hidden") { e0.removeAttribute("data-wa"); continue; }
+      var r = e0.getBoundingClientRect(), ang = 0, tr = cs.transform;
+      if (tr && tr !== "none") { var mt = tr.match(/matrix\(([^)]+)\)/); if (mt) { var v = mt[1].split(",").map(parseFloat); ang = Math.atan2(v[1], v[0]) * 180 / Math.PI; } }
+      info.push({ e: e0, w: w, h: h, cx: r.left + r.width / 2 + sx, cy: r.top + r.height / 2 + sy, ang: ang, col: col, sw: (bw[0] + bw[1] + bw[2] + bw[3]) / 4 });
+    }
+    for (i = 0; i < info.length; i++) info[i].e.setAttribute("data-wa", "1");
+    b.classList.add("wob-all");
+    for (i = 0; i < info.length; i++) {
+      var o = info[i], p = o.e._wp, sig = [o.w, o.h, Math.round(o.cx), Math.round(o.cy), Math.round(o.ang), o.col].join();
+      if (!p) { p = svgEl("path", {}); o.e._wp = p; waSvg.appendChild(p); }
+      p._t = waTick;
+      if (still && p._sig === sig) continue;
+      p._sig = sig;
+      p.setAttribute("transform", "translate(" + o.cx.toFixed(1) + " " + o.cy.toFixed(1) + ") rotate(" + o.ang.toFixed(2) + ") translate(" + (-o.w / 2).toFixed(1) + " " + (-o.h / 2).toFixed(1) + ")");
+      p.setAttribute("d", roughPath(o.w, o.h)); p.style.stroke = o.col; p.style.strokeWidth = Math.max(1.5, o.sw * 0.8);
+    }
+    var ps = waSvg.childNodes;
+    for (i = ps.length - 1; i >= 0; i--) if (ps[i]._t !== waTick) waSvg.removeChild(ps[i]);
+  }
+  function wobAllOff() {
+    document.body.classList.remove("wob-all");
+    var tagged = document.querySelectorAll("[data-wa]"); for (var i = 0; i < tagged.length; i++) { tagged[i].removeAttribute("data-wa"); tagged[i]._wp = null; }
+    if (waSvg && waSvg.parentNode) waSvg.parentNode.removeChild(waSvg); waSvg = null;
+  }
+  function wobTick() {
+    if (!opts.wobble || document.hidden) return;
+    wobAllTick();
+    var still = isReduced(), els = document.querySelectorAll(".btn, .chip");
+    for (var i = 0; i < els.length; i++) {
+      var e0 = els[i], w = e0.offsetWidth, h = e0.offsetHeight; if (!w || !h) continue;
+      var s = e0.querySelector("svg.wobs");
+      if (!s) {
+        s = svgEl("svg", { "class": "wobs", "aria-hidden": "true" }); s.appendChild(svgEl("path", {})); e0.appendChild(s);
+      } else if (still && s.getAttribute("data-d")) continue;
+      s.style.width = (w + 8) + "px"; s.style.height = (h + 8) + "px";
+      s.setAttribute("viewBox", "-4 -4 " + (w + 8) + " " + (h + 8));
+      s.firstChild.setAttribute("d", roughPath(w, h)); s.setAttribute("data-d", "1");
+    }
+  }
+  function startWob() { if (!wobTimer) { wobTimer = setInterval(wobTick, 170); wobTick(); } }
+  function stopWob() {
+    if (wobTimer) { clearInterval(wobTimer); wobTimer = null; }
+    wobAllOff();
+    var old = document.querySelectorAll("svg.wobs"); for (var i = 0; i < old.length; i++) old[i].parentNode.removeChild(old[i]);
+  }
+
+  /* scribble over buttons */
+  function scribbleOn(e0) {
+    var w = e0.offsetWidth, h = e0.offsetHeight; if (!w || !h) return;
+    var n = Math.max(4, Math.round(w / 20)), d = "M-4 " + (h * 0.5).toFixed(1);
+    for (var i = 1; i <= n; i++) {
+      var x = -4 + (w + 8) * i / n, y = h * (i % 2 ? 0.2 : 0.8) + (Math.random() - 0.5) * h * 0.25;
+      d += " L" + x.toFixed(1) + " " + y.toFixed(1);
+    }
+    var s = svgEl("svg", { "class": "scr", viewBox: "0 0 " + w + " " + h, "aria-hidden": "true" }), p = svgEl("path", { d: d, pathLength: "1" });
+    s.style.width = w + "px"; s.style.height = h + "px"; s.appendChild(p);
+    e0.classList.add("scr-host"); e0.appendChild(s);
+    setTimeout(function () {
+      if (s.parentNode) s.parentNode.removeChild(s);
+      if (!e0.querySelector(".scr")) e0.classList.remove("scr-host");
+    }, 900);
+  }
+  document.addEventListener("click", function (e) {
+    if (!opts.scribble || opts.reduce) return;
+    var b = e.target.closest ? e.target.closest("button,a.btn,label.btn,.go") : null;
+    if (!b || b.closest(".row") || b.classList.contains("pinbtn")) return;
+    scribbleOn(b); fx("scratch");
+  }, true);
+  $("sfxOn").addEventListener("change", function () { snd.sfx = this.checked; saveSnd(); fx("click"); });
+  $("musOn").addEventListener("change", function () { snd.music = this.checked; saveSnd(); if (snd.music) startMusic(); else { stopMusic(); updateAd(); } });
+  $("vol").addEventListener("input", function () { snd.vol = this.value / 100; setMusVol(); });
+  $("vol").addEventListener("change", saveSnd);
+  document.addEventListener("pointerdown", function first() {
+    document.removeEventListener("pointerdown", first);
+    if (snd.music && !AC) startMusic();
+  });
+
+  /* ---------- events: timed, coloured, with place, details and a reminder ---------- */
+  var DOWN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MON3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function dateLabel(k) { var p = k.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]); return DOWN[d.getDay()] + " " + d.getDate() + " " + MON3[d.getMonth()]; }
+  function sortEv(a, b) { return (a.allDay ? "" : a.start).localeCompare(b.allDay ? "" : b.start) || a.title.localeCompare(b.title); }
+  function eventsOn(k) { return events.filter(function (e) { return e.date <= k && k <= (e.endDate || e.date); }).sort(sortEv); }
+  function evTime(e, k) {
+    if (e.allDay || !e.start) return "All day";
+    if (e.date !== k) return "Continues";
+    return e.end ? e.start + "–" + e.end : e.start;
+  }
+  function evStartMs(e) {
+    var p = e.date.split("-"), hm = (e.allDay || !e.start) ? [9, 0] : e.start.split(":");
+    return new Date(+p[0], +p[1] - 1, +p[2], +hm[0], +hm[1]).getTime();
+  }
+  function mapsUrl(q) { return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q); }
+  function agendaEl(k) {
+    var box = el("div", "agenda"), head = el("div", "aghead");
+    head.appendChild(el("b", null, (k === todayKey() ? "Today · " : "") + dateLabel(k)));
+    var add = el("button", "btn", "Add event"); add.type = "button"; add.addEventListener("click", function () { openEv(null, k); });
+    head.appendChild(add); box.appendChild(head);
+    var ul = el("ul", "evlist"), list = eventsOn(k);
+    if (!list.length) ul.appendChild(el("li", "evnone", "No events this day."));
+    list.forEach(function (e) {
+      var li = el("li", "ev"); li.style.borderLeftColor = evHex(e.color);
+      var main = el("div", "evmain");
+      main.appendChild(el("span", "evt", evTime(e, k)));
+      main.appendChild(el("b", "evn", e.title));
+      var meta = [];
+      if (e.place) meta.push(placeInfo(e.place).n);
+      if (e.where) meta.push(e.where);
+      if (e.src === "device") meta.push("from the phone calendar");
+      if (e.remind >= 0) meta.push(e.remind === 0 ? "reminder at start" : "reminder " + (e.remind === 1440 ? "1 day" : e.remind + " min") + " before");
+      if (meta.length) main.appendChild(el("span", "evm", meta.join(" · ")));
+      if (e.notes) main.appendChild(el("span", "evm", e.notes));
+      li.appendChild(main);
+      var act = el("div", "evact");
+      if (e.where) { var go = el("a", "go", "Maps ↗"); go.target = "_blank"; go.rel = "noopener noreferrer"; go.href = mapsUrl(e.where); act.appendChild(go); }
+      if (e.src !== "device") {
+        var ed = el("button", "btn ghost", "Edit"); ed.type = "button"; ed.setAttribute("aria-label", "Edit " + e.title); ed.addEventListener("click", function () { openEv(e, k); });
+        var rm = el("button", "btn ghost", "×"); rm.type = "button"; rm.setAttribute("aria-label", "Delete " + e.title);
+        rm.addEventListener("click", function () { phoneForget(e); events = events.filter(function (x) { return x.id !== e.id; }); persist(); render(); fx("del"); syncSoon(); });
+        act.appendChild(ed); act.appendChild(rm);
+      }
+      li.appendChild(act); ul.appendChild(li);
+    });
+    box.appendChild(ul); return box;
+  }
+
+  var evEditId = null, evColor = "peacock";
+  function drawSw() {
+    var sw = $("evSw"); sw.textContent = "";
+    EVCOL.forEach(function (c) {
+      var b = el("button", "sw" + (evColor === c[0] ? " on" : "")); b.type = "button"; b.style.background = c[2];
+      b.setAttribute("role", "radio"); b.setAttribute("aria-checked", evColor === c[0] ? "true" : "false"); b.setAttribute("aria-label", c[1]); b.title = c[1];
+      b.addEventListener("click", function () { evColor = c[0]; drawSw(); });
+      sw.appendChild(b);
+    });
+  }
+  function syncAll() { $("evTimes").hidden = $("evAll").checked; }
+  function openEv(e, k) {
+    evEditId = e ? e.id : null;
+    var pl = $("evPlace"); pl.innerHTML = '<option value="">No place on the map</option>' + $("newPlace").innerHTML;
+    $("evTitle").value = e ? e.title : ""; $("evDate").value = e ? e.date : k; $("evEnd").value = e && e.endDate ? e.endDate : "";
+    $("evAll").checked = e ? (e.allDay || !e.start) : false;
+    $("evStart").value = e && e.start ? e.start : "09:00"; $("evEndT").value = e ? e.end : "10:00";
+    evColor = e ? e.color : "peacock"; pl.value = e ? e.place : ""; if (pl.value !== (e ? e.place : "")) pl.value = "";
+    $("evWhere").value = e ? e.where : ""; $("evNotes").value = e ? e.notes : ""; $("evRem").value = String(e ? e.remind : 30);
+    $("evSave").textContent = e ? "Save changes" : "Save event"; $("evMsg").textContent = "";
+    syncAll(); drawSw(); $("evForm").hidden = false;
+    try { $("evForm").scrollIntoView({ block: "nearest" }); } catch (x) {}
+    $("evTitle").focus();
+  }
+  $("evAll").addEventListener("change", syncAll);
+  $("evCancel").addEventListener("click", function () { $("evForm").hidden = true; });
+  $("evForm").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var title = $("evTitle").value.trim(), date = $("evDate").value;
+    if (!title) { $("evMsg").textContent = "Give the event a title."; $("evTitle").focus(); return; }
+    if (!date) { $("evMsg").textContent = "Pick a date."; return; }
+    var rec = cleanEvents([{ id: evEditId || uid(), title: title, date: date, endDate: $("evEnd").value, allDay: $("evAll").checked,
+      start: $("evStart").value, end: $("evEndT").value, color: evColor, place: $("evPlace").value, where: $("evWhere").value, notes: $("evNotes").value, remind: Number($("evRem").value) }])[0];
+    if (!rec) { $("evMsg").textContent = "Could not save that event. Check the date and times."; return; }
+    if (evEditId) { var old = events.filter(function (x) { return x.id === evEditId; })[0]; if (old && old.ext) rec.ext = old.ext; events = events.map(function (x) { return x.id === evEditId ? rec : x; }); }
+    else { if (events.length >= 500) { $("evMsg").textContent = "That is the limit of 500 events."; return; } events.push(rec); }
+    var p = rec.date.split("-"); calM = { y: +p[0], m: +p[1] - 1 }; dayFilter = rec.date;
+    $("evForm").hidden = true; persist(); render(); fx("add"); toast("Event saved."); syncSoon();
+  });
+
+  /* next up line under the day stamp */
+  function renderNext() {
+    var box = $("nextEv"), now = new Date(), hm = pad(now.getHours()) + ":" + pad(now.getMinutes()), found = null;
+    for (var off = 0; off < 15 && !found; off++) {
+      var k = dkey(new Date(now.getFullYear(), now.getMonth(), now.getDate() + off));
+      var cand = eventsOn(k).filter(function (e) {
+        if (off > 0) return e.date === k || e.allDay;
+        return e.allDay || !e.start || (e.end || e.start) >= hm || e.date !== k;
+      });
+      if (cand.length) found = { e: cand[0], k: k, off: off };
+    }
+    box.hidden = !found; if (!found) return;
+    var e = found.e, when = found.off === 0 ? "Today" : found.off === 1 ? "Tomorrow" : dateLabel(found.k);
+    box.textContent = "";
+    var dot = el("i", "evdot"); dot.style.background = evHex(e.color); box.appendChild(dot);
+    box.appendChild(document.createTextNode("Next: " + when + (e.allDay || !e.start ? "" : " " + e.start) + " · " + e.title));
+  }
+
+  /* reminders: fire while the page is open (the Android app will do this in the background) */
+  var FIRED = {};
+  try { FIRED = JSON.parse(localStorage.getItem("mission-map-fired") || "{}") || {}; } catch (e) { FIRED = {}; }
+  function remCheck() {
+    var now = Date.now(), changed = false;
+    events.forEach(function (e) {
+      if (e.remind < 0) return;
+      var at = evStartMs(e) - e.remind * 60000, key = e.id + ":" + e.date + ":" + e.start + ":" + e.remind;
+      if (now >= at && now < at + 150000 && !FIRED[key]) {
+        FIRED[key] = now; changed = true;
+        var msg = e.title + (e.allDay || !e.start ? " (today)" : " at " + e.start);
+        toast("Reminder: " + msg); fx("chime");
+        try { if (window.Notification && Notification.permission === "granted") new Notification(e.title, { body: msg }); } catch (x) {}
+      }
+    });
+    Object.keys(FIRED).forEach(function (k) { if (now - FIRED[k] > 3 * 86400000) { delete FIRED[k]; changed = true; } });
+    if (changed) { try { localStorage.setItem("mission-map-fired", JSON.stringify(FIRED)); } catch (x) {} }
+    renderNext();
+  }
+  setInterval(remCheck, 30000);
+  function notifState() {
+    var m = $("notifMsg"), b = $("notifBtn");
+    if (!window.Notification) { m.textContent = "This browser has no notifications. Reminders show inside the page."; b.hidden = true; return; }
+    var s = Notification.permission;
+    m.textContent = s === "granted" ? "Notifications are on. They only fire while this page is open." : s === "denied" ? "Notifications are blocked for this page in the browser settings. Reminders still show inside the page." : "Not allowed yet. Reminders show inside the page until you allow notifications.";
+    b.hidden = s !== "default";
+  }
+  $("notifBtn").addEventListener("click", function () {
+    try { var r = Notification.requestPermission(function () { notifState(); }); if (r && r.then) r.then(notifState); } catch (e) {}
+  });
+  notifState();
+
+  /* ---------- phone features: reminders and calendar sync, only inside the Android app ---------- */
+  var NATIVE = false, LN = null, CAL = null;
+  try {
+    NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
+    if (NATIVE) { LN = Capacitor.registerPlugin("LocalNotifications"); CAL = Capacitor.registerPlugin("CapacitorCalendar"); }
+  } catch (e) { NATIVE = false; }
+  var PKEY = "mission-map-phone";
+  var phone = { remind: true, calOn: false, readCals: [], writeCal: "", del: [], last: 0 };
+  try {
+    var pv = JSON.parse(localStorage.getItem(PKEY) || "null");
+    if (pv) {
+      phone.remind = pv.remind !== false; phone.calOn = !!pv.calOn; phone.writeCal = typeof pv.writeCal === "string" ? pv.writeCal : "";
+      if (Array.isArray(pv.readCals)) phone.readCals = pv.readCals.filter(function (s) { return typeof s === "string"; }).slice(0, 50);
+      if (Array.isArray(pv.del)) phone.del = pv.del.filter(function (s) { return typeof s === "string"; }).slice(0, 200);
+      if (isFinite(pv.last)) phone.last = Number(pv.last);
+    }
+  } catch (e) {}
+  function saveP() { try { localStorage.setItem(PKEY, JSON.stringify(phone)); } catch (e) {} }
+  function pMsg(t) { var m = $("phMsg"); if (m) m.textContent = t; }
+  function errText(e) { return (e && (e.message || e.errorMessage)) ? String(e.message || e.errorMessage) : String(e || "unknown error"); }
+
+  /* reminders: the phone's own alarm clock fires them, even when the app is closed */
+  function hash32(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 1) || 1; }
+  var exactOK = true, schedT = null, schedBusy = false, schedAgain = false;
+  function checkExact() {
+    return LN.checkExactNotificationSetting().then(function (r) { exactOK = !!r && r.exact_alarm === "granted"; }).catch(function () { exactOK = false; });
+  }
+  function schedulePhone() { if (!NATIVE || !LN) return; clearTimeout(schedT); schedT = setTimeout(doSchedule, 1200); }
+  function doSchedule() {
+    if (schedBusy) { schedAgain = true; return; }
+    schedBusy = true;
+    var now = Date.now(), items = [];
+    if (phone.remind) events.forEach(function (e) {
+      if (e.remind < 0 || e.src === "device") return;
+      var at = evStartMs(e) - e.remind * 60000;
+      if (at > now + 3000 && at < now + 120 * 86400000) items.push({ e: e, at: at });
+    });
+    items.sort(function (a, b) { return a.at - b.at; }); items = items.slice(0, 60);
+    LN.getPending().then(function (p) {
+      var ids = (p.notifications || []).map(function (n) { return { id: n.id }; });
+      return ids.length ? LN.cancel({ notifications: ids }) : null;
+    }).then(function () {
+      if (!items.length) return;
+      return LN.checkPermissions().then(function (p) { return p.display === "granted" ? p : LN.requestPermissions(); }).then(function (p) {
+        if (p.display !== "granted") { pMsg("Notifications are blocked. Allow them for Mission Map in Android settings to get reminders."); return; }
+        return LN.createChannel({ id: "events", name: "Event reminders", description: "Reminders for your events", importance: 4, visibility: 1, vibration: true }).catch(function () {})
+          .then(checkExact).then(function () {
+            return LN.schedule({ notifications: items.map(function (o) {
+              var e = o.e, bits = [e.allDay || !e.start ? "Today" : "At " + e.start];
+              if (e.place) bits.push(placeInfo(e.place).n);
+              if (e.where) bits.push(e.where);
+              return { id: hash32(e.id + ":" + o.at), title: e.title, body: bits.join(" · "), channelId: "events", smallIcon: "ic_stat_mission",
+                schedule: { at: new Date(o.at), allowWhileIdle: true }, isExactNotification: exactOK, extra: { evId: e.id } };
+            }) });
+          });
+      });
+    }).catch(function (e) { pMsg("Could not set reminders: " + errText(e)); }).then(function () {
+      schedBusy = false; if (schedAgain) { schedAgain = false; schedulePhone(); }
+    });
+  }
+  function reminderStatus() {
+    if (!LN) return;
+    Promise.all([LN.checkPermissions(), LN.checkExactNotificationSetting().catch(function () { return { exact_alarm: "denied" }; })]).then(function (r) {
+      var ok = r[0].display === "granted", ex = r[1].exact_alarm === "granted";
+      $("phNotifMsg").textContent = (ok ? "Notifications are allowed. " : "Notifications are not allowed yet. ") + (ex ? "Exact timing is allowed." : "Exact timing is off, so reminders may arrive a few minutes late.");
+      $("phNotif").textContent = ok && ex ? "Check again" : ok ? "Allow exact timing" : "Allow notifications";
+      $("phNotif").setAttribute("data-step", !ok ? "perm" : !ex ? "exact" : "ok");
+    }).catch(function (e) { $("phNotifMsg").textContent = "Could not check: " + errText(e); });
+  }
+
+  /* calendar sync with the phone's own calendars */
+  var calList = [], syncing = false, syncT = null;
+  function nearestColor(hex) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec(typeof hex === "string" ? hex : "");
+    if (!m) return "peacock";
+    var r = parseInt(m[1], 16), g = parseInt(m[2], 16), b = parseInt(m[3], 16), best = "peacock", bd = 1e9;
+    EVCOL.forEach(function (c) {
+      var x = parseInt(c[2].slice(1, 3), 16), y = parseInt(c[2].slice(3, 5), 16), z = parseInt(c[2].slice(5, 7), 16);
+      var d = (r - x) * (r - x) + (g - y) * (g - y) + (b - z) * (b - z); if (d < bd) { bd = d; best = c[0]; }
+    });
+    return best;
+  }
+  function ymdOf(t, utc) { var x = new Date(t); return utc ? x.getUTCFullYear() + "-" + pad(x.getUTCMonth() + 1) + "-" + pad(x.getUTCDate()) : dkey(x); }
+  function devToEvent(d, calColor) {
+    var allDay = !!d.isAllDay, date, endDate = "", start = "", end = "";
+    if (allDay) {
+      var utc = d.startDate % 86400000 === 0;
+      date = ymdOf(d.startDate, utc); var last = ymdOf(Math.max(d.startDate, d.endDate - 1), utc); if (last > date) endDate = last;
+    } else {
+      var sd = new Date(d.startDate), ed = new Date(d.endDate);
+      date = dkey(sd); start = pad(sd.getHours()) + ":" + pad(sd.getMinutes()); end = pad(ed.getHours()) + ":" + pad(ed.getMinutes());
+      var ek = ymdOf(Math.max(d.startDate, d.endDate - 1), false); if (ek > date) { endDate = ek; if (dkey(ed) > ek) end = "23:59"; }
+    }
+    return cleanEvents([{ id: "d:" + d.id + ":" + d.startDate, title: d.title || "(no title)", date: date, endDate: endDate, allDay: allDay, start: start, end: end,
+      color: nearestColor(d.color || calColor), place: "", where: d.location || "", notes: d.description || "", remind: -1,
+      src: "device", ext: { id: String(d.id), cal: String(d.calendarId) } }])[0];
+  }
+  function toDev(e) {
+    var o = { title: e.title, calendarId: phone.writeCal, location: e.where || (e.place ? placeInfo(e.place).n : ""), description: e.notes || "", color: evHex(e.color) };
+    var p = e.date.split("-"), q = (e.endDate || e.date).split("-");
+    if (e.allDay || !e.start) {
+      o.isAllDay = true; o.startDate = new Date(+p[0], +p[1] - 1, +p[2]).getTime(); o.endDate = new Date(+q[0], +q[1] - 1, +q[2]).getTime();
+    } else {
+      var s = e.start.split(":"), en = (e.end || "").split(":");
+      o.isAllDay = false; o.startDate = new Date(+p[0], +p[1] - 1, +p[2], +s[0], +s[1]).getTime();
+      o.endDate = e.end ? new Date(+q[0], +q[1] - 1, +q[2], +en[0], +en[1]).getTime() : o.startDate + 3600000;
+      if (o.endDate <= o.startDate) o.endDate = o.startDate + 3600000;
+    }
+    return o;
+  }
+  function sigOf(o) { return String(hash32([o.title, o.startDate, o.endDate, o.isAllDay, o.location, o.description, o.color, o.calendarId].join("|"))); }
+  function pushLocal(canWrite) {
+    var chain = Promise.resolve(), changed = false, dels = phone.del.slice(); phone.del = []; saveP();
+    if (canWrite) dels.forEach(function (id) { chain = chain.then(function () { return CAL.deleteEvent({ id: id }).catch(function () {}); }); });
+    if (!canWrite || !phone.writeCal) return chain;
+    events.forEach(function (e) {
+      if (e.src === "device") return;
+      chain = chain.then(function () {
+        var o = toDev(e), sig = sigOf(o);
+        if (e.ext) {
+          if (e.ext.cal !== phone.writeCal || e.ext.sig === sig) return;
+          var m = {}; Object.keys(o).forEach(function (k) { m[k] = o[k]; }); m.id = e.ext.id;
+          return CAL.modifyEvent(m).then(function () { e.ext.sig = sig; changed = true; }).catch(function () {});
+        }
+        return CAL.createEvent(o).then(function (r) { if (r && r.id) { e.ext = { id: String(r.id), cal: phone.writeCal, sig: sig }; changed = true; } });
+      });
+    });
+    return chain.then(function () { if (changed) persist(); });
+  }
+  function pullDevice() {
+    if (!phone.readCals.length) { events = events.filter(function (e) { return e.src !== "device"; }); return Promise.resolve(0); }
+    var from = Date.now() - 30 * 86400000, to = Date.now() + 365 * 86400000, mine = {}, col = {};
+    events.forEach(function (e) { if (e.ext) mine[e.ext.id] = 1; });
+    calList.forEach(function (c) { col[c.id] = c.color; });
+    return CAL.listEventsInRange({ from: from, to: to }).then(function (r) {
+      var out = [];
+      (r.result || []).forEach(function (d) {
+        if (phone.readCals.indexOf(String(d.calendarId)) < 0 || mine[String(d.id)]) return;
+        var rec = devToEvent(d, col[d.calendarId]); if (rec) out.push(rec);
+      });
+      out.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+      out = out.slice(0, 400);
+      events = events.filter(function (e) { return e.src !== "device"; }).concat(out);
+      persist(); render(); return out.length;
+    });
+  }
+  function loadCals() {
+    return CAL.listCalendars().then(function (r) {
+      calList = (r.result || []).filter(function (c) { return c && c.id != null; }).map(function (c) { c.id = String(c.id); return c; });
+      var known = {}; calList.forEach(function (c) { known[c.id] = 1; });
+      phone.readCals = phone.readCals.filter(function (id) { return known[id]; });
+      if (phone.writeCal && !known[phone.writeCal]) phone.writeCal = "";
+      saveP(); renderCalList();
+    });
+  }
+  function renderCalList() {
+    var box = $("phCals"); box.textContent = "";
+    calList.forEach(function (c) {
+      var lab = el("label", "chk"), cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = phone.readCals.indexOf(c.id) >= 0;
+      cb.addEventListener("change", function () {
+        phone.readCals = phone.readCals.filter(function (x) { return x !== c.id; }); if (cb.checked) phone.readCals.push(c.id);
+        saveP(); phoneSync();
+      });
+      var dot = el("i", "evdot"); dot.style.background = /^#?[0-9a-f]{6}/i.test(c.color || "") ? (c.color.charAt(0) === "#" ? c.color : "#" + c.color) : "#888";
+      lab.appendChild(cb); lab.appendChild(dot);
+      lab.appendChild(document.createTextNode(" " + (c.title || c.internalTitle || "Calendar") + (c.accountName ? " (" + c.accountName + ")" : "")));
+      box.appendChild(lab);
+    });
+    var w = $("phWrite"); w.textContent = "";
+    var none = document.createElement("option"); none.value = ""; none.textContent = "Do not save my events to the phone"; w.appendChild(none);
+    calList.forEach(function (c) {
+      if (c.allowsContentModifications === false || c.isImmutable === true) return;
+      var o = document.createElement("option"); o.value = c.id; o.textContent = (c.title || "Calendar") + (c.accountName ? " (" + c.accountName + ")" : ""); w.appendChild(o);
+    });
+    w.value = phone.writeCal; if (w.value !== phone.writeCal) w.value = "";
+    $("phCalBox").hidden = !calList.length;
+  }
+  function phoneSync() {
+    if (!NATIVE || !CAL || !phone.calOn || syncing) return Promise.resolve();
+    syncing = true; pMsg("Syncing with the phone calendar...");
+    return CAL.checkAllPermissions().then(function (p) {
+      var r = p.result || {};
+      if (r.readCalendar !== "granted") throw new Error("Calendar access is off. Tap Connect phone calendar.");
+      return pushLocal(r.writeCalendar === "granted").then(function () { return calList.length ? null : loadCals(); }).then(pullDevice);
+    }).then(function (n) { phone.last = Date.now(); saveP(); pMsg("Synced. " + n + " events from the phone calendar."); })
+      .catch(function (e) { pMsg("Calendar sync failed: " + errText(e)); }).then(function () { syncing = false; });
+  }
+  function syncSoon() { if (!NATIVE || !phone.calOn) return; clearTimeout(syncT); syncT = setTimeout(phoneSync, 2500); }
+  function phoneForget(e) { if (e && e.ext && e.src !== "device") { phone.del.push(e.ext.id); saveP(); } }
+  function phoneInit() {
+    var sec = $("phoneSec"); sec.hidden = !NATIVE; if (!NATIVE) return;
+    $("phRem").checked = phone.remind;
+    $("phRem").addEventListener("change", function () { phone.remind = this.checked; saveP(); schedulePhone(); });
+    $("phNotif").addEventListener("click", function () {
+      var step = this.getAttribute("data-step");
+      var p = step === "exact" ? LN.changeExactNotificationSetting() : step === "perm" ? LN.requestPermissions() : Promise.resolve();
+      Promise.resolve(p).catch(function () {}).then(function () { reminderStatus(); schedulePhone(); });
+    });
+    $("phConnect").addEventListener("click", function () {
+      CAL.requestFullCalendarAccess().then(function (r) {
+        if (!r || r.result !== "granted") { pMsg("Calendar access was not allowed. You can allow it in Android settings."); return; }
+        var first = !phone.calOn; phone.calOn = true;
+        return loadCals().then(function () {
+          if (first && !phone.readCals.length) phone.readCals = calList.filter(function (c) { return c.visible !== false; }).map(function (c) { return c.id; });
+          saveP(); renderCalList(); return phoneSync();
+        });
+      }).catch(function (e) { pMsg("Could not connect: " + errText(e)); });
+    });
+    $("phWrite").addEventListener("change", function () { phone.writeCal = this.value; saveP(); phoneSync(); });
+    $("phSync").addEventListener("click", phoneSync);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) { phoneSync(); schedulePhone(); reminderStatus(); } });
+    reminderStatus(); schedulePhone();
+    if (phone.calOn) loadCals().then(phoneSync).catch(function (e) { pMsg("Calendar: " + errText(e)); });
+  }
+
+  /* ---------- media: your own pictures and sounds, kept on this device ---------- */
+  var MKEY = "mission-map-media";
+  var mmeta = { playlist: [], themeMus: {}, shuffle: false, useOwn: true, sketch: true };
+  try {
+    var mm = JSON.parse(localStorage.getItem(MKEY) || "null");
+    if (mm) {
+      if (Array.isArray(mm.playlist)) mmeta.playlist = mm.playlist.filter(function (t) { return t && typeof t.id === "string" && typeof t.name === "string"; }).slice(0, 60);
+      if (mm.themeMus && typeof mm.themeMus === "object") Object.keys(mm.themeMus).forEach(function (k) { if (typeof mm.themeMus[k] === "string") mmeta.themeMus[k] = mm.themeMus[k]; });
+      mmeta.shuffle = !!mm.shuffle; mmeta.useOwn = mm.useOwn !== false; mmeta.sketch = mm.sketch !== false;
+    }
+  } catch (e) {}
+  function saveMeta() { try { localStorage.setItem(MKEY, JSON.stringify(mmeta)); } catch (e) {} }
+
+  var idb = null, memStore = {}, urls = {}, sfxHas = {};
+  function mediaUrl(k) { return urls[k] || ""; }
+  function dbOpen() {
+    return new Promise(function (res) {
+      try {
+        var rq = indexedDB.open("mission-map-media", 1);
+        rq.onupgradeneeded = function () { rq.result.createObjectStore("f"); };
+        rq.onsuccess = function () { idb = rq.result; res(); };
+        rq.onerror = function () { res(); }; rq.onblocked = function () { res(); };
+      } catch (e) { res(); }
+    });
+  }
+  function dbPut(k, blob) {
+    memStore[k] = blob;
+    return new Promise(function (res) {
+      if (!idb) return res(false);
+      try { var tx = idb.transaction("f", "readwrite"); tx.objectStore("f").put(blob, k); tx.oncomplete = function () { res(true); }; tx.onerror = tx.onabort = function () { res(false); }; } catch (e) { res(false); }
+    });
+  }
+  function dbGet(k) {
+    return new Promise(function (res) {
+      if (!idb) return res(memStore[k] || null);
+      try { var rq = idb.transaction("f").objectStore("f").get(k); rq.onsuccess = function () { res(rq.result || memStore[k] || null); }; rq.onerror = function () { res(memStore[k] || null); }; } catch (e) { res(memStore[k] || null); }
+    });
+  }
+  function dbDel(k) {
+    delete memStore[k];
+    return new Promise(function (res) {
+      if (!idb) return res();
+      try { var tx = idb.transaction("f", "readwrite"); tx.objectStore("f").delete(k); tx.oncomplete = function () { res(); }; tx.onerror = tx.onabort = function () { res(); }; } catch (e) { res(); }
+    });
+  }
+  function dbKeys() {
+    return new Promise(function (res) {
+      if (!idb) return res([]);
+      try { var rq = idb.transaction("f").objectStore("f").getAllKeys(); rq.onsuccess = function () { res(rq.result || []); }; rq.onerror = function () { res([]); }; } catch (e) { res([]); }
+    });
+  }
+  function mMsg(t) { var m = $("mediaMsg"); if (m) m.textContent = t; }
+  function readAB(blob) {
+    return new Promise(function (res, rej) {
+      if (blob.arrayBuffer) { blob.arrayBuffer().then(res, rej); return; }
+      var r = new FileReader(); r.onload = function () { res(r.result); }; r.onerror = rej; r.readAsArrayBuffer(blob);
+    });
+  }
+
+  /* pictures: shrink first, so phone photos stay small on the device */
+  function shrink(file, max, alpha) {
+    return new Promise(function (res, rej) {
+      var u = URL.createObjectURL(file), im = new Image();
+      im.onload = function () {
+        var w = im.naturalWidth, h = im.naturalHeight;
+        if (!w || !h) { URL.revokeObjectURL(u); rej(); return; }
+        var sc = Math.min(1, max / Math.max(w, h)), c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(w * sc)); c.height = Math.max(1, Math.round(h * sc));
+        c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(u);
+        c.toBlob(function (b) { if (b) res(b); else rej(); }, alpha ? "image/png" : "image/jpeg", 0.85);
+      };
+      im.onerror = function () { URL.revokeObjectURL(u); rej(); };
+      im.src = u;
+    });
+  }
+  function setUrl(k, blob) { if (urls[k]) { try { URL.revokeObjectURL(urls[k]); } catch (e) {} } urls[k] = URL.createObjectURL(blob); }
+  function putImg(k, blob) { setUrl(k, blob); return dbPut(k, blob); }
+  function delImg(k) { if (urls[k]) { try { URL.revokeObjectURL(urls[k]); } catch (e) {} delete urls[k]; } return dbDel(k); }
+
+  /* mission pictures */
+  function thumbEl(id) {
+    var u = urls["m:" + id]; if (!u) return null;
+    var t = el("span", "thumb"), im = new Image(); im.alt = ""; im.src = u; t.appendChild(im); return t;
+  }
+  function picControl(id) {
+    if (urls["m:" + id]) {
+      var b = el("button", "pic", "No pic"); b.type = "button"; b.setAttribute("aria-label", "Remove this mission's picture");
+      b.addEventListener("click", function () { delImg("m:" + id); render(); });
+      return b;
+    }
+    var l = el("label", "pic", "Pic"), inp = document.createElement("input");
+    inp.type = "file"; inp.accept = "image/*"; inp.setAttribute("aria-label", "Add a picture to this mission");
+    inp.addEventListener("change", function () {
+      var f = this.files && this.files[0]; this.value = ""; if (!f) return;
+      shrink(f, 360, false).then(function (b) { return putImg("m:" + id, b); }).then(function () { render(); }).catch(function () { toast("Could not read that picture."); });
+    });
+    l.appendChild(inp); return l;
+  }
+  function dropPic(id) { if (urls["m:" + id]) delImg("m:" + id); }
+  var pendingPic = null, preLen = 0;
+  $("newPic").addEventListener("change", function () {
+    var f = this.files && this.files[0]; this.value = ""; if (!f) return;
+    shrink(f, 360, false).then(function (b) { pendingPic = b; $("newPicLbl").firstChild.nodeValue = "Photo ready: " + (f.name.length > 22 ? f.name.slice(0, 20) + "..." : f.name); })
+      .catch(function () { pendingPic = null; toast("Could not read that picture."); });
+  });
+  $("addForm").addEventListener("submit", function () { preLen = items.length; }, true);
+  $("addForm").addEventListener("submit", function () {
+    if (!pendingPic || items.length <= preLen || !items[0]) return;
+    var id = items[0].id, b = pendingPic; pendingPic = null; $("newPicLbl").firstChild.nodeValue = "Add a photo";
+    putImg("m:" + id, b).then(function () { render(); });
+  });
+
+  /* looks: map picture, pin pictures, theme wallpaper */
+  var faceHTML = {};
+  function setFace(which, url) {
+    var f = document.querySelector(".pin3d .face." + which); if (!f) return;
+    if (faceHTML[which] === undefined) faceHTML[which] = f.innerHTML;
+    if ((f.getAttribute("data-u") || "") === (url || "")) return;
+    f.setAttribute("data-u", url || "");
+    if (url) { f.textContent = ""; var im = new Image(); im.alt = ""; im.src = url; f.appendChild(im); } else f.innerHTML = faceHTML[which];
+  }
+  function applyMedia() {
+    var m = $("map"), mu = urls["i:map"];
+    if (m) { var want = mu ? 'url("' + mu + '")' : ""; if (m.style.backgroundImage !== want) m.style.backgroundImage = want; }
+    $("mapcard").classList.toggle("no-sketch", !!mu && !mmeta.sketch);
+    setFace("front", urls["i:pinSmile"] || urls["i:pinMap"] || ""); setFace("back", urls["i:pinEvil"] || urls["i:pinMap"] || "");
+    var w = urls["w:" + view], b = document.body;
+    if (w) { if (b.style.getPropertyValue("--wall") !== 'url("' + w + '")') b.style.setProperty("--wall", 'url("' + w + '")'); } else b.style.removeProperty("--wall");
+    b.classList.toggle("has-wall", !!w);
+  }
+
+  /* sound effects: short clips decoded once */
+  var SFX_NAMES = [["add", "Add a mission"], ["del", "Delete"], ["flip", "Pin flip"], ["print", "Receipt print"], ["chime", "Chime (all done)"],
+    ["scribble", "Cross out (scribble)"], ["untick", "Untick"], ["click", "Button click"], ["scratch", "Button scribble"], ["pin", "Drop a pin"]];
+  function decodeSfx(name) {
+    if (!AC) return Promise.resolve();
+    return dbGet("s:" + name).then(function (b) {
+      if (!b) { delete sfxBufs[name]; return; }
+      return readAB(b).then(function (ab) { return new Promise(function (res) { AC.decodeAudioData(ab, function (buf) { sfxBufs[name] = buf; res(); }, function () { res(); }); }); });
+    });
+  }
+  function preloadSfx() { Object.keys(sfxHas).forEach(function (n) { if (!sfxBufs[n]) decodeSfx(n); }); }
+
+  /* music: theme track, then my playlist, then the built-in loop */
+  function desiredMusic() {
+    if (mmeta.themeMus[view]) return "t:" + view + ":" + mmeta.themeMus[view];
+    if (mmeta.useOwn && mmeta.playlist.length) return "pl";
+    return "gen:" + stationKey();
+  }
+  function musicRefresh(force) {
+    if (!snd.music || !AC) return;
+    if (!force && mus.cur === desiredMusic() && (mus.timer || mus.el)) return;
+    startMusic();
+  }
+  function playBlob(blob, loop, onEnd, name) {
+    dropEl();
+    var url = URL.createObjectURL(blob), a = new Audio(); a.preload = "auto"; a.loop = !!loop; a.src = url;
+    var node = null;
+    try { node = AC.createMediaElementSource(a); node.connect(musBus); } catch (e) { node = null; a.volume = snd.vol; }
+    mus.el = a; mus.node = node; mus.url = url;
+    if (name) sndMsg("Playing: " + name);
+    a.onended = function () { if (onEnd) onEnd(); };
+    a.onerror = function () { sndMsg("Could not play " + (name || "that file") + "."); if (onEnd) onEnd(true); };
+    var p = a.play(); if (p && p.catch) p.catch(function () { sndMsg("Tap anywhere on the page to start the music."); });
+  }
+  function playBlobKey(key, loop, onEnd, tok) {
+    dbGet(key).then(function (b) {
+      if (tok !== mus.tok) return;
+      if (!b) { sndMsg("That track is missing, so the built-in music is back."); delete mmeta.themeMus[view]; saveMeta(); startMusic(); return; }
+      playBlob(b, loop, onEnd, mmeta.themeMus[view]);
+    });
+  }
+  function plOrder() {
+    var o = [], i; for (i = 0; i < mmeta.playlist.length; i++) o.push(i);
+    if (mmeta.shuffle) for (i = o.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = o[i]; o[i] = o[j]; o[j] = t; }
+    return o;
+  }
+  function playPl(first) {
+    if (first) { mus.order = plOrder(); mus.pos = 0; mus.fails = 0; }
+    var tok = mus.tok, n = mmeta.playlist.length; if (!n) return;
+    if (mus.pos >= mus.order.length) { mus.order = plOrder(); mus.pos = 0; }
+    var tr = mmeta.playlist[mus.order[mus.pos]];
+    if (!tr) { mus.order = plOrder(); mus.pos = 0; return; }
+    renderPl(tr.id);
+    dbGet("pl:" + tr.id).then(function (b) {
+      if (tok !== mus.tok) return;
+      var next = function (bad) {
+        if (tok !== mus.tok) return;
+        if (bad && ++mus.fails >= n) { sndMsg("None of your tracks could be played."); stopMusic(); return; }
+        mus.pos++; playPl(false);
+      };
+      if (!b) { next(true); return; }
+      playBlob(b, false, function (bad) { next(bad === true); }, tr.name);
+    });
+  }
+  function renderPl(nowId) {
+    var ol = $("plList"); ol.textContent = "";
+    mmeta.playlist.forEach(function (t, i) {
+      var li = el("li", nowId === t.id ? "now" : "");
+      li.appendChild(el("span", "tn", (i + 1) + ". " + t.name));
+      [["↑", "Move up", -1], ["↓", "Move down", 1]].forEach(function (a) {
+        var b = el("button", "btn ghost", a[0]); b.type = "button"; b.setAttribute("aria-label", a[1] + ": " + t.name);
+        b.addEventListener("click", function () {
+          var j = i + a[2]; if (j < 0 || j >= mmeta.playlist.length) return;
+          var x = mmeta.playlist[i]; mmeta.playlist[i] = mmeta.playlist[j]; mmeta.playlist[j] = x; saveMeta(); renderPl(nowId);
+        });
+        li.appendChild(b);
+      });
+      var rm = el("button", "btn ghost", "×"); rm.type = "button"; rm.setAttribute("aria-label", "Remove " + t.name);
+      rm.addEventListener("click", function () {
+        mmeta.playlist.splice(i, 1); dbDel("pl:" + t.id); saveMeta(); renderPl(nowId);
+        if (!mmeta.playlist.length) musicRefresh(true);
+      });
+      li.appendChild(rm); ol.appendChild(li);
+    });
+    if (!mmeta.playlist.length) { var e = el("li", "", "No tracks yet."); e.style.display = "block"; ol.appendChild(e); }
+  }
+  $("plIn").addEventListener("change", function () {
+    var fs = Array.prototype.slice.call(this.files || []); this.value = ""; if (!fs.length) return;
+    var added = 0, skipped = 0;
+    fs.reduce(function (p, f) {
+      return p.then(function () {
+        if (f.size > 60 * 1024 * 1024 || mmeta.playlist.length >= 60) { skipped++; return; }
+        var id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        return dbPut("pl:" + id, f).then(function () { mmeta.playlist.push({ id: id, name: f.name.replace(/\.[^.]+$/, "").slice(0, 60) }); added++; });
+      });
+    }, Promise.resolve()).then(function () {
+      saveMeta(); renderPl(); mmeta.useOwn = true; $("plOwn").checked = true; saveMeta();
+      sndMsg(added ? "Added " + added + " track" + (added > 1 ? "s" : "") + " to your playlist." + (skipped ? " " + skipped + " skipped (over 60 MB)." : "") : "Nothing added: files must be under 60 MB.");
+      if (added) { snd.music = true; $("musOn").checked = true; saveSnd(); audio(); musicRefresh(); if (!mus.timer && !mus.el) startMusic(); }
+    });
+  });
+  $("plNext").addEventListener("click", function () {
+    if (!snd.music || mus.cur !== "pl") { sndMsg("Skip works while your playlist is playing."); return; }
+    var t = ++mus.tok; dropEl(); mus.pos++; playPl(false);
+  });
+  $("plOwn").addEventListener("change", function () { mmeta.useOwn = this.checked; saveMeta(); musicRefresh(); });
+  $("plShuf").addEventListener("change", function () { mmeta.shuffle = this.checked; saveMeta(); if (mus.cur === "pl") musicRefresh(true); });
+  $("mapSketch").addEventListener("change", function () { mmeta.sketch = this.checked; saveMeta(); applyMedia(); });
+
+  /* options: slot rows */
+  var slotReg = [];
+  function slotRow(parent, label, accept, status, onFile, onReset) {
+    var d = el("div", "slot"), st = el("span", "ss", "");
+    var lab = el("label", "btn ghost filebtn", "Choose"), inp = document.createElement("input");
+    inp.type = "file"; inp.accept = accept; inp.setAttribute("aria-label", "Choose a file for " + label); lab.appendChild(inp);
+    var rs = el("button", "btn ghost", "Reset"); rs.type = "button"; rs.setAttribute("aria-label", "Reset " + label);
+    d.appendChild(el("span", "sn", label)); d.appendChild(lab); d.appendChild(rs); d.appendChild(st); parent.appendChild(d);
+    inp.addEventListener("change", function () { var f = this.files && this.files[0]; this.value = ""; if (f) onFile(f, st); });
+    rs.addEventListener("click", function () { onReset(st); });
+    slotReg.push(function () { st.textContent = status(); });
+  }
+  var IMG_AC = "image/*,.png,.jpg,.jpeg,.webp,.gif,.bmp", AUD_AC = "audio/*,.mp3,.wav,.m4a,.ogg,.flac,.aac";
+  function imgSlot(parent, label, key, max, alpha) {
+    slotRow(parent, label, IMG_AC, function () { return urls[key] ? "Your picture is in use." : "Default."; },
+      function (f, st) {
+        st.textContent = "Working...";
+        shrink(f, max, alpha).then(function (b) { return putImg(key, b); }).then(function (ok) {
+          st.textContent = ok ? "Your picture is in use and kept on this device." : "In use for now, but this browser would not keep it for next time.";
+          applyMedia(); render();
+        }).catch(function () { st.textContent = "Could not read that picture. Try a JPG or PNG."; });
+      },
+      function (st) { delImg(key).then(function () { st.textContent = "Default."; applyMedia(); render(); }); });
+  }
+  function buildMediaUi() {
+    imgSlot($("imgSlots"), "Map picture", "i:map", 1600, false);
+    imgSlot($("imgSlots"), "Smiley pin", "i:pinSmile", 256, true);
+    imgSlot($("imgSlots"), "Evil pin", "i:pinEvil", 256, true);
+    imgSlot($("imgSlots"), "One pin for both (also used on the map)", "i:pinMap", 256, true);
+    THEMES.forEach(function (t) { imgSlot($("wallSlots"), t[1], "w:" + t[0], 1600, false); });
+    SFX_NAMES.forEach(function (p) {
+      var n = p[0];
+      slotRow($("sfxSlots"), p[1], AUD_AC, function () { return sfxHas[n] ? "Your sound is in use." : "Built-in sound."; },
+        function (f, st) {
+          if (f.size > 3 * 1024 * 1024) { st.textContent = "Too big for an effect. Keep clips under 3 MB."; return; }
+          if (!audio()) { st.textContent = "This browser cannot play audio here."; return; }
+          dbPut("s:" + n, f).then(function (ok) {
+            sfxHas[n] = true;
+            return decodeSfx(n).then(function () {
+              if (!sfxBufs[n]) { sfxHas[n] = false; delete sfxBufs[n]; dbDel("s:" + n); st.textContent = "Could not read that audio file. Try an MP3 or WAV."; return; }
+              st.textContent = ok ? "Your sound is in use and kept on this device." : "In use for now, but this browser would not keep it for next time.";
+              fx(n);
+            });
+          });
+        },
+        function (st) { delete sfxHas[n]; delete sfxBufs[n]; dbDel("s:" + n).then(function () { st.textContent = "Built-in sound."; }); });
+    });
+    THEMES.forEach(function (t) {
+      var v = t[0];
+      slotRow($("themeMusSlots"), t[1], AUD_AC, function () { return mmeta.themeMus[v] ? "Plays in this theme: " + mmeta.themeMus[v] : "Uses my playlist or the built-in music."; },
+        function (f, st) {
+          if (f.size > 60 * 1024 * 1024) { st.textContent = "Too big. Keep tracks under 60 MB."; return; }
+          dbPut("mt:" + v, f).then(function (ok) {
+            mmeta.themeMus[v] = f.name.replace(/\.[^.]+$/, "").slice(0, 60); saveMeta();
+            st.textContent = ok ? "Plays in this theme: " + mmeta.themeMus[v] : "Plays this visit only: this browser would not keep it.";
+            if (v === view) { snd.music = true; $("musOn").checked = true; saveSnd(); audio(); musicRefresh(true); }
+          });
+        },
+        function (st) { delete mmeta.themeMus[v]; saveMeta(); dbDel("mt:" + v).then(function () { st.textContent = "Uses my playlist or the built-in music."; if (v === view) musicRefresh(true); }); });
+    });
+    $("plOwn").checked = mmeta.useOwn; $("plShuf").checked = mmeta.shuffle; $("mapSketch").checked = mmeta.sketch;
+    renderPl(); mediaStatus();
+  }
+  function mediaStatus() { slotReg.forEach(function (f) { f(); }); }
+  function mediaInit() {
+    buildMediaUi();
+    dbOpen().then(dbKeys).then(function (keys) {
+      var have = {}; keys.forEach(function (k) { have[k] = true; });
+      if (idb) {
+        mmeta.playlist = mmeta.playlist.filter(function (t) { return have["pl:" + t.id]; });
+        Object.keys(mmeta.themeMus).forEach(function (v) { if (!have["mt:" + v]) delete mmeta.themeMus[v]; });
+        saveMeta();
+      }
+      keys.forEach(function (k) { if (typeof k === "string" && k.indexOf("s:") === 0) sfxHas[k.slice(2)] = true; });
+      var loads = keys.filter(function (k) { return typeof k === "string" && /^(i:|w:|m:)/.test(k); }).map(function (k) {
+        return dbGet(k).then(function (b) { if (b) setUrl(k, b); });
+      });
+      return Promise.all(loads).then(function () {
+        mediaStatus(); renderPl(); applyMedia(); render(); if (AC) preloadSfx();
+        if (!idb) mMsg("This browser will not keep files between visits. Anything you add lasts until you close the page.");
+      });
+    }).catch(function () { mMsg("Could not open file storage here. Pictures and sounds last until you close the page."); });
+  }
+  /* ---------- persistence ---------- */
+  function setStatus(t) { $("status").textContent = t; }
+  function persist() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(items));
+      localStorage.setItem(XKEY, JSON.stringify({ pins: pins, visited: visited, stats: stats, events: events }));
+    } catch (e) {}
+    schedulePhone();
+    if (!ref) return;
+    var copy = JSON.parse(JSON.stringify({ items: items, pins: pins, visited: visited, stats: stats, events: events.filter(function (x) { return x.src !== "device"; }) }));
+    queue = queue.then(function () { return ref.set(copy); }).catch(function () { setStatus("Could not sync just now. Changes are kept on this device."); });
+  }
+  function initDb() {
+    if (!window.claude || !window.claude.use) { setStatus("Saved on this device only."); return; }
+    Promise.all([window.claude.use("db"), window.claude.use("user")]).then(function (r) {
+      var db = r[0], user = r[1];
+      if (!db || !user) { setStatus("Saved on this device only."); return; }
+      return user.id().then(function (id) {
+        if (!id) { setStatus("Saved on this device only."); return; }
+        ref = db.doc("data/users/" + id + "/state");
+        var timer = setTimeout(function () { setStatus("Your synced list is taking a while. Showing what is on this device."); }, 10000);
+        ref.onSnapshot(function (snap) {
+          if (!snap.metadata.fromCache) { clearTimeout(timer); setStatus("Synced to your account."); }
+          if (snap.metadata.hasPendingWrites) return;
+          if (snap.exists) {
+            var d = snap.data();
+            if (d && Array.isArray(d.items)) {
+              items = d.items.map(function (i) { return cleanItem(i, true); }).filter(Boolean);
+              if (Array.isArray(d.pins)) pins = cleanPins(d.pins);
+              if (Array.isArray(d.events)) events = cleanEvents(d.events);
+              if (d.visited) visited = cleanVisited(d.visited);
+              if (d.stats) stats = cleanStats(d.stats);
+              markVisitedFromItems(); fillSelect(); render();
+            }
+          }
+        }, function () { clearTimeout(timer); ref = null; setStatus("Saved on this device only."); });
+      });
+    }).catch(function () { setStatus("Saved on this device only."); });
+  }
+
+  /* ---------- start ---------- */
+  buildMap(); fillSelect(); applyOpts(); render(); initDb(); mediaInit(); phoneInit();
+  setInterval(updateSky, 60000);
+})();
+</script>
