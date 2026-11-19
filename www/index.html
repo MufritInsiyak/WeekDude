@@ -216,6 +216,9 @@ body[data-view="errands"] .empty { font-family: "Permanent Marker", var(--font-h
 .opts details { border-top: 1px solid var(--ink-soft); padding: 4px 0; }
 .opts summary { cursor: pointer; letter-spacing: .1em; text-transform: uppercase; font-size: 13px; min-height: 40px; display: flex; align-items: center; }
 .grp { display: grid; gap: 10px; padding: 4px 0 8px; }
+.grp input[type="text"], .grp input[type="url"], .grp input[type="password"], .grp select {
+  background: var(--paper); color: var(--ink); border: 2px solid var(--ink); padding: 7px 10px; min-height: 38px; border-radius: 0; max-width: 100%; box-sizing: border-box;
+}
 .suggest .seg button { color: var(--ink); }
 .suggest .seg button[aria-pressed="true"] { color: var(--paper); }
 body[data-view="errands"] .suggest .seg { border-color: #1c1a15; background: transparent; }
@@ -243,7 +246,10 @@ body[data-view="errands"] .btn { --wob: #000; }
 /* ===== v2: pin, meters, week, road, race, toast ===== */
 .wrap { position: relative; z-index: 1; }
 .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.pinbtn { background: none; border: 0; padding: 0; width: 60px; height: 60px; flex: none; perspective: 500px; transform-origin: 50% 8%; animation: sway 5s ease-in-out infinite; cursor: pointer; }
+.pinbtn { background: none; border: 0; padding: 0; width: 64px; height: 64px; flex: none; perspective: 500px; transform-origin: 50% 10%; animation: sway 5s ease-in-out infinite; cursor: pointer; }
+@media (max-width: 480px) {
+  .pinbtn { width: 56px; height: 56px; }
+}
 @keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
 .pin3d { display: block; position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.3, 1.35, .5, 1); }
 .pinbtn[aria-pressed="true"] .pin3d { transform: rotateY(180deg); }
@@ -613,6 +619,18 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
 .aod-sq svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .aod-pin { margin: 20px auto 0; max-width: 90%; padding: 6px 10px; border: 1px solid #5a4d12; color: #b59b22; font-size: 14px; letter-spacing: .06em; }
 .aod-hint { margin-top: 28px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #3d3d3d; }
+
+/* patterns panel */
+.pat-h { margin: 12px 0 4px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.bars.hrs { gap: 2px; }
+.bars.hrs .bc span { font-size: 9px; }
+.bars.hrs .bc em { font-size: 8px; }
+.pat-grid { display: grid; gap: 6px; }
+.pat-row { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.pat-row b { font-weight: 400; }
+.pat-row span { color: var(--ink-soft); text-align: right; }
+.pat-row b { flex: 0 0 auto; }
+.pat-row span { white-space: nowrap; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -629,7 +647,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
       <path d="M22.4 38 L25.6 38 L24.5 62 L23.5 62 Z" fill="url(#gMetal)"/>
       <ellipse cx="24" cy="38" rx="6.4" ry="2.3" fill="url(#gMetal)"/>
       </g>
-      <image href="smile-pin.png" x="5.5" y="3.5" width="37" height="37" preserveAspectRatio="xMidYMid meet"/>
+      <image id="pinSmileImg" href="pins/base-smile.png" xlink:href="pins/base-smile.png" x="5.5" y="3.5" width="37" height="37" preserveAspectRatio="xMidYMid meet"/>
     </g>
     <g id="pinEvil">
       <g class="needle">
@@ -637,20 +655,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
       <path d="M22.4 38 L25.6 38 L24.5 62 L23.5 62 Z" fill="url(#gMetal)"/>
       <ellipse cx="24" cy="38" rx="6.4" ry="2.3" fill="url(#gMetal)"/>
       </g>
-      <path d="M10 11 C4 7 3 -1 7 -6 C9 0 14 3 18 5 Z" fill="url(#gEv)"/>
-      <path d="M38 11 C44 7 45 -1 41 -6 C39 0 34 3 30 5 Z" fill="url(#gEv)"/>
-      <circle cx="24" cy="22" r="18" fill="url(#gEv)"/>
-      <circle cx="24" cy="22" r="17.6" fill="none" stroke="#3a0300" stroke-opacity=".55" stroke-width="1"/>
-      <path d="M11.5 13.5 L21 18.5" stroke="#1d0300" stroke-width="3" stroke-linecap="round"/>
-      <path d="M36.5 13.5 L27 18.5" stroke="#1d0300" stroke-width="3" stroke-linecap="round"/>
-      <ellipse cx="17" cy="21.5" rx="2.8" ry="2.3" fill="#ffe04a"/>
-      <ellipse cx="31" cy="21.5" rx="2.8" ry="2.3" fill="#ffe04a"/>
-      <circle cx="17.7" cy="21.8" r="1.1" fill="#1d0300"/>
-      <circle cx="30.3" cy="21.8" r="1.1" fill="#1d0300"/>
-      <path d="M12 28 Q24 41 36 28 Z" fill="#2a0300"/>
-      <path d="M15.2 29.6 L17.6 33.6 L20 31 Z M20.8 31.4 L23.4 35.2 L25.8 31.6 Z M26.4 31 L28.8 33.6 L31.2 29.6 Z" fill="#fff5e0"/>
-      <ellipse cx="30" cy="34" rx="8" ry="3" fill="#fff" opacity=".12"/>
-      <ellipse cx="16.5" cy="11" rx="7.5" ry="4.4" transform="rotate(-30 16.5 11)" fill="url(#gSpec)" opacity=".8"/>
+      <image id="pinEvilImg" href="pins/base-evil.png" xlink:href="pins/base-evil.png" x="5.5" y="3.5" width="37" height="37" preserveAspectRatio="xMidYMid meet"/>
     </g>
   </defs>
 </svg>
@@ -660,8 +665,8 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
     <div class="brand">
       <button class="pinbtn" id="pinBtn" type="button" aria-pressed="false" aria-label="Flip the pin to switch between missions and the shouldn't-do list">
         <span class="pin3d">
-          <span class="face front"><svg viewBox="5 3 38 38" aria-hidden="true"><use href="#pinSmile"/></svg></span>
-          <span class="face back"><svg viewBox="5 3 38 38" aria-hidden="true"><use href="#pinEvil"/></svg></span>
+          <span class="face front"><img src="pins/base-smile.png" alt="Smiley"></span>
+          <span class="face back"><img src="pins/base-evil.png" alt="Evil"></span>
         </span>
       </button>
       <div>
@@ -692,6 +697,11 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
           <button id="cmDark" type="button" aria-pressed="false">Dark</button>
         </div>
         <div class="msg">Every theme except Map and Notes keeps its own colors, whatever the color mode.</div>
+        <div class="msg" style="margin-top:10px">Pin icon style</div>
+        <div class="seg" role="group" aria-label="Pin icon style">
+          <button id="pinStyleBase" type="button" aria-pressed="true">Base badge</button>
+          <button id="pinStyleAlt" type="button" aria-pressed="false">Alternate</button>
+        </div>
       </div>
     </details>
     <details>
@@ -701,6 +711,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
         <label class="chk"><input type="checkbox" id="hasOn"> Random hassles on new missions</label>
         <label class="chk"><input type="checkbox" id="strsOn"> Stress meter</label>
         <label class="chk"><input type="checkbox" id="srOn"> Stress darkens every red in the app</label>
+        <label class="chk"><input type="checkbox" id="ptOn"> Tailor the daily practice to the exercises I actually try</label>
         <label class="chk"><input type="checkbox" id="prOn"> Daily practice card (one exercise a day; you can pick one and pin it by the map)</label>
         <label class="chk"><input type="checkbox" id="brOn"> "Bring" field on missions</label>
         <div class="msg">Achievements</div>
@@ -834,6 +845,44 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
         <div class="msg" id="phMsg" role="status">Events from your phone calendars show up in the month view, in the nearest Google Calendar colour. Their own alerts stay with the calendar app.</div>
       </div>
     </details>
+    <details id="gcalSec">
+      <summary>Google Calendar</summary>
+      <div class="grp">
+        <div class="msg">Sync your events with Google Calendar. Synced events appear in the month view with Google Calendar's matching colours.</div>
+        <div class="row-actions">
+          <button class="btn" id="gcalConnect" type="button">Connect Google Calendar</button>
+          <button class="btn ghost" id="gcalSyncBtn" type="button">Sync now</button>
+          <button class="btn ghost" id="gcalDisconnect" type="button" hidden>Disconnect</button>
+        </div>
+        <div id="gcalCalBox" hidden>
+          <label class="chk" for="gcalSelect">Calendar: <select id="gcalSelect"></select></label>
+          <label class="chk"><input type="checkbox" id="gcalTwoWay" checked> Two-way sync (save app events to Google Calendar)</label>
+          <label class="chk"><input type="checkbox" id="gcalAuto" checked> Auto-sync on open and Month view</label>
+        </div>
+        <details id="gcalSettingsSec" style="margin-top:8px;">
+          <summary style="font-size:13px; cursor:pointer;">Connection &amp; iCal settings</summary>
+          <div class="grp" style="margin-top:6px; font-size:13px; display:grid; gap:8px;">
+            <div class="msg">Connect with a Google OAuth Client ID, a direct Access Token, or your Secret iCal (.ics) URL for zero-setup read sync:</div>
+            <label style="display:grid; gap:2px;">
+              <span>Google OAuth Client ID</span>
+              <input type="text" id="gcalClientId" placeholder="e.g. 123456789-xxx.apps.googleusercontent.com" style="width:100%; font-size:12px;">
+            </label>
+            <label style="display:grid; gap:2px;">
+              <span>Access Token (optional direct bearer)</span>
+              <input type="password" id="gcalToken" placeholder="Bearer ya29...." style="width:100%; font-size:12px;">
+            </label>
+            <label style="display:grid; gap:2px;">
+              <span>Secret address in iCal format (.ics URL)</span>
+              <input type="url" id="gcalIcalUrl" placeholder="https://calendar.google.com/calendar/ical/.../basic.ics" style="width:100%; font-size:12px;">
+            </label>
+            <div class="row-actions">
+              <button class="btn ghost" id="gcalSaveCfg" type="button">Save credentials</button>
+            </div>
+          </div>
+        </details>
+        <div class="msg" id="gcalStatus" role="status">Not connected.</div>
+      </div>
+    </details>
     <details id="backup">
       <summary>Backup</summary>
       <div class="grp">
@@ -869,6 +918,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
     <div class="days views" id="views"></div>
   </section>
   <section class="suggest" id="wrap" hidden aria-label="Week wrap-up"></section>
+  <section class="suggest" id="patterns" hidden aria-label="Your patterns"></section>
   <section class="cal" id="cal" hidden aria-label="Month calendar"></section>
   <form class="evform" id="evForm" hidden autocomplete="off" aria-label="Event">
     <input id="evTitle" maxlength="60" placeholder="Event title" aria-label="Event title">
@@ -1017,7 +1067,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
 
   var KEY = "mission-map-v1", XKEY = "mission-map-extra", VKEY = "mission-map-view", EKEY = "mission-map-evil";
   var items = [], pins = [], visited = {}, stats = { cash: 0, races: 0, best: {}, unlocked: {} };
-  var events = [], view = "map", evil = false, filter = null, dayFilter = null, wrapOpen = false;
+  var events = [], view = "map", evil = false, filter = null, dayFilter = null, wrapOpen = false, patOpen = false;
   var lastToggled = null, lastAdded = null, ref = null, queue = Promise.resolve();
   var dropping = false, tempPin = null, race = null, raceTimer = null;
 
@@ -1033,7 +1083,14 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
   }
   function str(v, n) { return typeof v === "string" ? v.trim().slice(0, n) : ""; }
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
-  function svgEl(tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  function svgEl(tag, attrs) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) {
+      e.setAttribute(k, attrs[k]);
+      if (k === "href") { try { e.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", attrs[k]); } catch (ex) {} }
+    }
+    return e;
+  }
 
   /* ---------- places and pins ---------- */
   function pinById(id) { for (var i = 0; i < pins.length; i++) if (pins[i].id === id) return pins[i]; return null; }
@@ -1061,7 +1118,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
   function cleanEvents(a) {
     var out = [];
     if (!Array.isArray(a)) return out;
-    a.slice(0, 500).forEach(function (r) {
+    a.slice(0, 1000).forEach(function (r) {
       if (!r || typeof r !== "object") return;
       var title = str(r.title, 60), date = typeof r.date === "string" && DRE.test(r.date) ? r.date : "";
       if (!title || !date) return;
@@ -1070,9 +1127,10 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
       var allDay = !!r.allDay || !start; if (allDay) { start = ""; end = ""; }
       var color = EVCOL.some(function (c) { return c[0] === r.color; }) ? r.color : "peacock";
       var rem = [-1, 0, 10, 30, 60, 1440].indexOf(Number(r.remind)) >= 0 ? Number(r.remind) : -1;
-      out.push({ id: typeof r.id === "string" && r.id ? r.id.slice(0, 48) : uid(), title: title, date: date, endDate: endDate, allDay: allDay, start: start, end: end, color: color,
+      out.push({ id: typeof r.id === "string" && r.id ? r.id.slice(0, 128) : uid(), title: title, date: date, endDate: endDate, allDay: allDay, start: start, end: end, color: color,
         place: str(r.place, 20), where: str(r.where, 120), notes: str(r.notes, 300), remind: rem,
-        src: r.src === "device" ? "device" : "", ext: r.ext && typeof r.ext.id === "string" && r.ext.id ? { id: r.ext.id.slice(0, 40), cal: str(r.ext.cal, 20), sig: str(r.ext.sig, 400) } : null });
+        src: (r.src === "device" || r.src === "gcal") ? r.src : "",
+        ext: r.ext && typeof r.ext.id === "string" && r.ext.id ? { id: r.ext.id.slice(0, 128), cal: str(r.ext.cal, 128), sig: str(r.ext.sig, 400) } : null });
     });
     return out;
   }
@@ -1319,8 +1377,40 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
   }
   function prSave(q) { try { localStorage.setItem("mission-map-practice", JSON.stringify(q)); } catch (e) {} }
   function prPinned() { var v = -1; try { v = parseInt(localStorage.getItem("mission-map-pin"), 10); } catch (e) {} return v >= 0 && v < PRACTICE.length ? v : -1; }
+  /* habits: a small private log (this phone only) feeds the patterns panel and tailors the daily practice */
+  function logGet() { try { var a = JSON.parse(localStorage.getItem("mission-map-log")); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function logEv(code, arg, ts) {
+    var a = logGet(); a.push([ts || Date.now(), code, String(arg === undefined ? "" : arg)]);
+    if (a.length > 2500) a = a.slice(a.length - 2500);
+    try { localStorage.setItem("mission-map-log", JSON.stringify(a)); } catch (e) {}
+  }
+  function prStats() {
+    var g = { A: [0, 0, 0], B: [0, 0, 0], C: [0, 0, 0], D: [0, 0, 0] }, ex = PRACTICE.map(function () { return [0, 0, 0, 0]; }), tot = 0;
+    logGet().forEach(function (r) {
+      var i = parseInt(r[2], 10), k = { s: 0, p: 1, k: 2 }[r[1]]; if (k === undefined || !(i >= 0 && i < PRACTICE.length)) return;
+      g[PRACTICE[i][0]][k]++; ex[i][k]++; if (k === 0) ex[i][3] = Math.max(ex[i][3], r[0]); if (k > 0) tot++;
+    });
+    return { g: g, ex: ex, signals: tot };
+  }
+  function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  /* weighted by how often you actually try each kind, steady through the day, avoids exercises shown in the last 6 days */
+  function prTailored(day, skip) {
+    var st = prStats(); if (st.signals < 5) return -1;
+    var rnd = mulberry(day * 97 + skip * 7919 + 13), w = PRACTICE.map(function (p, i) {
+      var q = st.g[p[0]], score = (q[1] + 1) / (q[1] + q[2] + 2), x = score;
+      if (Date.now() - st.ex[i][3] < 6 * 864e5 && st.ex[i][3]) x *= 0.2;
+      if (st.ex[i][2] >= 2 && st.ex[i][1] === 0) x *= 0.3;
+      return x;
+    }), sum = w.reduce(function (a, b) { return a + b; }, 0), r = rnd() * sum;
+    for (var i = 0; i < w.length; i++) { r -= w[i]; if (r <= 0) return i; }
+    return w.length - 1;
+  }
   function prToday(s) {
     if (s.pick !== null && s.pick >= 0 && s.pick < PRACTICE.length) return s.pick;
+    if (opts.practiceTailor) {
+      var t0 = new Date(), d0 = Math.floor((new Date(t0.getFullYear(), t0.getMonth(), t0.getDate()) - new Date(2026, 0, 1)) / 864e5), tp = prTailored(d0, s.skip);
+      if (tp >= 0) return tp;
+    }
     var t = new Date(), day = Math.floor((new Date(t.getFullYear(), t.getMonth(), t.getDate()) - new Date(2026, 0, 1)) / 864e5);
     return ((day + s.skip) % PRACTICE.length + PRACTICE.length) % PRACTICE.length;
   }
@@ -1339,6 +1429,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
     renderMapNote();
     if (!opts.practiceOn) { box.hidden = true; return; }
     var s = prState(), idx = prToday(s), p = PRACTICE[idx], pinned = prPinned() === idx;
+    if ((s.shown || []).indexOf(idx) < 0) { s.shown = (s.shown || []).concat([idx]); prSave(s); logEv("s", idx); }
     box.hidden = false; box.className = "practice" + (s.done ? " done" : "") + (pinned ? " pinned" : "");
     box.innerHTML = "";
     function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt) e.textContent = txt; return e; }
@@ -1346,10 +1437,11 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
     h.appendChild(el("span", "pr-group", PR_GROUP[p[0]])); box.appendChild(h);
     box.appendChild(el("h3", "pr-title", p[1])); box.appendChild(el("p", "pr-text", p[2]));
     if (PR_NOTE[p[0]]) box.appendChild(el("p", "pr-note", PR_NOTE[p[0]]));
+    if (opts.practiceTailor && s.pick === null && prTailored(0, 0) >= 0) box.appendChild(el("p", "pr-note", "Picked for you, based on the exercises you actually try."));
     var row = el("div", "pr-row");
     var dn = el("button", "btn" + (s.done ? "" : " ghost"), s.done ? "Done today" : "I tried it"); dn.type = "button";
     dn.setAttribute("aria-pressed", String(!!s.done));
-    dn.addEventListener("click", function () { var q = prState(); q.done = !q.done; prSave(q); renderPractice(); fx("click"); });
+    dn.addEventListener("click", function () { var q = prState(); q.done = !q.done; if (q.done) logEv("p", idx); prSave(q); renderPractice(); fx("click"); });
     var pn = el("button", "btn" + (pinned ? "" : " ghost"), pinned ? "Pinned by the map" : "Pin by the map"); pn.type = "button";
     pn.setAttribute("aria-pressed", String(pinned));
     pn.addEventListener("click", function () { try { if (prPinned() === idx) localStorage.removeItem("mission-map-pin"); else localStorage.setItem("mission-map-pin", String(idx)); } catch (e) {} renderPractice(); fx("click"); });
@@ -1358,9 +1450,9 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
     var lb = el("label", "", "Choose one yourself"); lb.setAttribute("for", "prPick");
     var sel = document.createElement("select"); sel.id = "prPick";
     PRACTICE.forEach(function (q, k) { var o = document.createElement("option"); o.value = String(k); o.textContent = q[0] + ". " + q[1]; if (k === idx) o.selected = true; sel.appendChild(o); });
-    sel.addEventListener("change", function () { var q = prState(); q.pick = parseInt(this.value, 10); q.done = false; prSave(q); renderPractice(); fx("click"); });
+    sel.addEventListener("change", function () { var q = prState(); if (!q.done) logEv("k", idx); q.pick = parseInt(this.value, 10); q.done = false; prSave(q); renderPractice(); fx("click"); });
     var an = el("button", "btn ghost", "Another"); an.type = "button";
-    an.addEventListener("click", function () { var q = prState(); if (q.pick !== null) { q.skip = 0; q.pick = (q.pick + 1) % PRACTICE.length; } else q.skip++; q.done = false; prSave(q); renderPractice(); fx("click"); });
+    an.addEventListener("click", function () { var q = prState(); if (!q.done) logEv("k", idx); if (q.pick !== null) { q.skip = 0; q.pick = (q.pick + 1) % PRACTICE.length; } else q.skip++; q.done = false; prSave(q); renderPractice(); fx("click"); });
     row2.appendChild(lb); row2.appendChild(sel); row2.appendChild(an); box.appendChild(row2);
   }
   /* stress: five little squares, white to dark red, scribbled more wildly towards the fifth */
@@ -1478,9 +1570,13 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
     vw.appendChild(w);
     var cb = el("button", "daybtn wrapbtn", "Month"); cb.type = "button"; 
     cb.setAttribute("aria-pressed", calOpen ? "true" : "false"); cb.setAttribute("aria-expanded", calOpen ? "true" : "false");
-    cb.addEventListener("click", function () { calOpen = !calOpen; try { localStorage.setItem("mission-map-cal", calOpen ? "1" : "0"); } catch (e) {} render(); fx("click"); });
+    cb.addEventListener("click", function () { calOpen = !calOpen; try { localStorage.setItem("mission-map-cal", calOpen ? "1" : "0"); } catch (e) {} render(); fx("click"); if (calOpen && typeof gcalAutoSync === "function") gcalAutoSync(); });
     vw.appendChild(cb);
-    renderWrap(days); renderCal(mine);
+    var pb = el("button", "daybtn wrapbtn", "Patterns"); pb.type = "button";
+    pb.setAttribute("aria-pressed", patOpen ? "true" : "false");
+    pb.addEventListener("click", function () { patOpen = !patOpen; render(); fx("click"); });
+    vw.appendChild(pb);
+    renderWrap(days); renderCal(mine); renderPatterns();
   }
   var MONTHN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   var calOpen = false, calM = null;
@@ -1550,6 +1646,59 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
     var cl = el("button", "btn ghost", "Close"); cl.type = "button";
     cl.addEventListener("click", function () { wrapOpen = false; render(); });
     var row = el("div", "row-actions"); row.appendChild(cl); box.appendChild(row);
+  }
+  /* ---------- patterns: when you are most active and which practice style suits you (all from this phone only) ---------- */
+  function hourWindow(arr) {
+    var best = -1, at = 0; for (var h = 0; h < 24; h++) { var s = arr[h] + arr[(h + 1) % 24]; if (s > best) { best = s; at = h; } }
+    return { from: at, sum: best, label: pad(at) + ":00-" + pad((at + 2) % 24) + ":00" };
+  }
+  var PR_STYLE = { A: "playing with words and sounds", B: "acting alongside the thought", C: "reframing the thought", D: "picturing the thought outside you" };
+  function renderPatterns() {
+    var box = $("patterns"); if (!box) return; box.hidden = !patOpen; if (box.hidden) return;
+    var log = logGet(), seen = {}, hrs = [], dh = [], wd = [], dw = [], i, total = 0, doneN = 0;
+    for (i = 0; i < 24; i++) { hrs.push(0); dh.push(0); }
+    for (i = 0; i < 7; i++) { wd.push(0); dw.push(0); }
+    function count(ts, isDone) { var d = new Date(ts), h = d.getHours(), w = (d.getDay() + 6) % 7; hrs[h]++; wd[w]++; total++; if (isDone) { dh[h]++; dw[w]++; doneN++; } }
+    log.forEach(function (r) { if (r[1] === "d") { seen[r[0]] = true; count(r[0], true); } else if (r[1] === "a" || r[1] === "p") count(r[0], false); });
+    items.forEach(function (it) { if (it.done && it.doneAt && !seen[it.doneAt]) count(it.doneAt, true); });
+    box.innerHTML = "";
+    box.appendChild(el("h2", null, "Your patterns"));
+    var NEED = 8;
+    if (total < NEED) {
+      box.appendChild(el("div", "wrapline", "Not enough to see a pattern yet: " + total + " of " + NEED + " actions so far. Add and finish missions and try practice exercises; this fills in by itself. It stays on this phone."));
+    } else {
+      function bars(vals, labels, cls) {
+        var mx = Math.max.apply(null, vals.concat([1])), wrap = el("div", "bars " + cls);
+        vals.forEach(function (c, k) { var b = el("div", "bc"); b.appendChild(el("em", null, c ? String(c) : "")); var bi = document.createElement("i"); bi.style.height = Math.round(c / mx * 70) + "%"; b.appendChild(bi); b.appendChild(el("span", null, labels[k])); wrap.appendChild(b); });
+        return wrap;
+      }
+      box.appendChild(el("div", "pat-h", "Activity by hour"));
+      box.appendChild(bars(hrs, hrs.map(function (_, h) { return h % 3 === 0 ? String(h) : ""; }), "hrs"));
+      var pk = hourWindow(hrs), lines = ["Most active: " + pk.label + "."];
+      if (doneN >= 5) { var pd = hourWindow(dh); lines.push("You finish most missions around " + pd.label + "."); }
+      box.appendChild(el("div", "pat-h", "Activity by weekday"));
+      box.appendChild(bars(wd, DAYN, "wk"));
+      var bw = wd.indexOf(Math.max.apply(null, wd)); lines.push("Busiest day: " + DAYN[bw] + (doneN >= 5 ? ". You finish the most on " + DAYN[dw.indexOf(Math.max.apply(null, dw))] + "." : "."));
+      var tl = items.length, dn = items.filter(function (x) { return x.done; }).length;
+      if (tl >= 5) lines.push("Finished so far: " + dn + " of " + tl + " missions (" + Math.round(dn / tl * 100) + "%).");
+      lines.forEach(function (t) { box.appendChild(el("div", "wrapline", t)); });
+      lines.length = 0;
+      box.appendChild(el("div", "pat-h", "Practice style"));
+      var st = prStats(), keys = ["A", "B", "C", "D"], rows = el("div", "pat-grid");
+      keys.forEach(function (k) {
+        var q = st.g[k], r = el("div", "pat-row"); r.appendChild(el("b", null, PR_GROUP[k]));
+        r.appendChild(el("span", null, q[1] + " tried, " + q[2] + " skipped")); rows.appendChild(r);
+      });
+      box.appendChild(rows);
+      if (st.signals >= 5) {
+        var rank = keys.slice().sort(function (a, b) { var A = st.g[a], B = st.g[b]; return (B[1] + 1) / (B[1] + B[2] + 2) - (A[1] + 1) / (A[1] + A[2] + 2); });
+        box.appendChild(el("div", "wrapline", "Your style so far: " + PR_STYLE[rank[0]] + ". The daily practice now leans that way" + (opts.practiceTailor ? "" : " (switch it on in Options)") + ", with a little of everything mixed in."));
+      } else box.appendChild(el("div", "wrapline", "Try or skip a few more practice exercises (" + st.signals + " of 5) and the daily pick will start to suit you."));
+    }
+    var cl = el("button", "btn ghost", "Close"); cl.type = "button"; cl.addEventListener("click", function () { patOpen = false; render(); });
+    var cr = el("button", "btn ghost", "Clear history"); cr.type = "button";
+    cr.addEventListener("click", function () { if (window.confirm("Clear the habit history on this phone? Missions are not touched.")) { try { localStorage.removeItem("mission-map-log"); } catch (e) {} render(); } });
+    var row = el("div", "row-actions"); row.appendChild(cl); row.appendChild(cr); box.appendChild(row);
   }
   function renderRoad() {
     var show = (opts.road || view === "racer") && !evil, box = $("road"); box.hidden = !show; if (!show) return;
@@ -1676,7 +1825,8 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
     var it = null;
     items.forEach(function (i) { if (i.id === id) it = i; });
     if (!it) return;
-    it.done = !it.done; it.doneAt = it.done ? Date.now() : 0; lastToggled = id;
+    var nowT = Date.now(); it.done = !it.done; it.doneAt = it.done ? nowT : 0; lastToggled = id;
+    if (it.done) logEv("d", it.evil ? "!" : it.place, nowT);
     var gained = 0;
     if (it.done) {
       if (!it.evil) visited[it.place] = true;
@@ -1697,7 +1847,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
     var it = cleanItem({ id: uid(), text: text, place: place, where: where, bring: bring, evil: evil, date: (opts.week && dayFilter) || todayKey() }, false);
     if (!it) return;
     if (!evil && opts.hassles && Math.random() < 0.35) it.hassle = HASSLES[Math.floor(Math.random() * HASSLES.length)];
-    items.unshift(it); lastAdded = it.id;
+    items.unshift(it); lastAdded = it.id; logEv("a", it.evil ? "!" : it.place);
     render(); persist();
     fx(view === "receipt" && opts.print ? "print" : "add");
   }
@@ -1855,7 +2005,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
       app: "mission-map", version: 3, exported: new Date().toISOString(),
       items: items.map(function (i) { return { id: i.id, text: i.text, place: i.place, where: i.where, bring: i.bring, hassle: i.hassle, done: i.done, evil: i.evil, paid: i.paid, date: i.date, doneAt: i.doneAt }; }),
       pins: pins, visited: visited, stats: stats,
-      events: events.filter(function (x) { return x.src !== "device"; }).map(function (x) { var c = {}; Object.keys(x).forEach(function (k) { if (k !== "ext" && k !== "src") c[k] = x[k]; }); return c; })
+      events: events.filter(function (x) { return x.src !== "device" && x.src !== "gcal"; }).map(function (x) { var c = {}; Object.keys(x).forEach(function (k) { if (k !== "ext" && k !== "src") c[k] = x[k]; }); return c; })
     }, null, 2);
   }
   function bkMsg(t) { $("bkMsg").textContent = t; }
@@ -2086,7 +2236,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
   /* ---------- options menu ---------- */
   var opts = { scribble: false, wobble: true, strike: true, tilt: true, reduce: false, doneBottom: false, tags: true, mode: "auto",
     print: true, week: true, hassles: true, stress: true, bring: false, rank: true, race: true, road: false, station: "auto", ads: true,
-    fog: true, moving: false, mapAll: false, wobAll: true, stressRed: true, stampRound: true, practiceOn: true, aodIdle: "0", aodLevel: "10", fontAll: "", fontMission: "" };
+    fog: true, moving: false, mapAll: false, wobAll: true, stressRed: true, stampRound: true, practiceOn: true, practiceTailor: true, aodIdle: "0", aodLevel: "10", fontAll: "", fontMission: "", pinAlt: false };
   var modeTouched = false;
   try {
     var ov = JSON.parse(localStorage.getItem("mission-map-opts") || "null");
@@ -2113,7 +2263,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
   function saveOpts() { try { localStorage.setItem("mission-map-opts", JSON.stringify(opts)); } catch (e) {} }
   var BOXES = [["scrOn", "scribble"], ["wobOn", "wobble"], ["strOn", "strike"], ["tiltOn", "tilt"], ["calmOn", "reduce"], ["botOn", "doneBottom"], ["tagOn", "tags"],
     ["prtOn", "print"], ["weekOn", "week"], ["hasOn", "hassles"], ["strsOn", "stress"], ["brOn", "bring"], ["rankOn", "rank"], ["raceOn", "race"],
-    ["roadOn", "road"], ["adsOn", "ads"], ["fogOn", "fog"], ["movOn", "moving"], ["mapAllOn", "mapAll"], ["wobAllOn", "wobAll"], ["srOn", "stressRed"], ["stRoundOn", "stampRound"], ["prOn", "practiceOn"]];
+    ["roadOn", "road"], ["adsOn", "ads"], ["fogOn", "fog"], ["movOn", "moving"], ["mapAllOn", "mapAll"], ["wobAllOn", "wobAll"], ["srOn", "stressRed"], ["stRoundOn", "stampRound"], ["prOn", "practiceOn"], ["ptOn", "practiceTailor"]];
   function applyOpts() {
     var c = document.body.classList;
     c.toggle("wob", opts.wobble); if (opts.wobble) { startWob(); wobTick(); } else stopWob();
@@ -2121,11 +2271,15 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
     var de = document.documentElement;
     if (opts.mode === "auto") { if (modeTouched) de.removeAttribute("data-theme"); } else de.setAttribute("data-theme", opts.mode);
     [["cmAuto", "auto"], ["cmLight", "light"], ["cmDark", "dark"]].forEach(function (p) { $(p[0]).setAttribute("aria-pressed", opts.mode === p[1]); });
+    if ($("pinStyleBase")) $("pinStyleBase").setAttribute("aria-pressed", opts.pinAlt ? "false" : "true");
+    if ($("pinStyleAlt")) $("pinStyleAlt").setAttribute("aria-pressed", opts.pinAlt ? "true" : "false");
     applyFonts(); buildTraffic(); updateSky();
   }
   function syncOpts() {
     $("sfxOn").checked = snd.sfx; $("musOn").checked = snd.music; $("vol").value = Math.round(snd.vol * 100);
     BOXES.forEach(function (b) { $(b[0]).checked = !!opts[b[1]]; });
+    if ($("pinStyleBase")) $("pinStyleBase").setAttribute("aria-pressed", opts.pinAlt ? "false" : "true");
+    if ($("pinStyleAlt")) $("pinStyleAlt").setAttribute("aria-pressed", opts.pinAlt ? "true" : "false");
     $("station").value = opts.station; $("aodIdle").value = opts.aodIdle; $("aodLevel").value = opts.aodLevel; $("fontAll").value = opts.fontAll; $("fontMission").value = opts.fontMission;
     renderAch();
   }
@@ -2135,6 +2289,12 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
   $("station").addEventListener("change", function () { opts.station = this.value; saveOpts(); musicRefresh(); });
   [["cmAuto", "auto"], ["cmLight", "light"], ["cmDark", "dark"]].forEach(function (p) {
     $(p[0]).addEventListener("click", function () { modeTouched = true; opts.mode = p[1]; saveOpts(); applyOpts(); });
+  });
+  if ($("pinStyleBase")) $("pinStyleBase").addEventListener("click", function () {
+    opts.pinAlt = false; saveOpts(); applyOpts(); applyMedia(); render();
+  });
+  if ($("pinStyleAlt")) $("pinStyleAlt").addEventListener("click", function () {
+    opts.pinAlt = true; saveOpts(); applyOpts(); applyMedia(); render();
   });
   (function buildThemeGrid() {
     var tg = $("themeGrid");
@@ -2162,7 +2322,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
     ];
     return "M" + p.map(function (q) { return q[0].toFixed(1) + " " + q[1].toFixed(1); }).join(" L");
   }
-  var WA_SEL = ".practice,.practice select,.practice .btn,.seg,.sug,.suggest,.mapcard,.paper,.note,.box,.tbtn,.rankbox,.stress .meter,.daybtn,.lane,.toast,.mapbar,.pinform,.pinform input,.dash,.thumb,.pic,.cal,.calday,.opts details,.opts select,.add input,.add select,.suggest textarea,.stamp,.go,.pinbtn,.evform,.evform input,.evform select,.evform textarea";
+  var WA_SEL = "#patterns,.practice,.practice select,.practice .btn,.seg,.sug,.suggest,.mapcard,.paper,.note,.box,.tbtn,.rankbox,.stress .meter,.daybtn,.lane,.toast,.mapbar,.pinform,.pinform input,.dash,.thumb,.pic,.cal,.calday,.opts details,.opts select,.add input,.add select,.suggest textarea,.stamp,.go,.pinbtn,.evform,.evform input,.evform select,.evform textarea";
   var waSvg = null, waTick = 0;
   function waOn() { return opts.wobble && opts.wobAll; }
   function inClosedDetails(e) {
@@ -2294,6 +2454,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
       if (e.place) meta.push(placeInfo(e.place).n);
       if (e.where) meta.push(e.where);
       if (e.src === "device") meta.push("from the phone calendar");
+      if (e.src === "gcal") meta.push("Google Calendar");
       if (e.remind >= 0) meta.push(e.remind === 0 ? "reminder at start" : "reminder " + (e.remind === 1440 ? "1 day" : e.remind + " min") + " before");
       if (meta.length) main.appendChild(el("span", "evm", meta.join(" · ")));
       if (e.notes) main.appendChild(el("span", "evm", e.notes));
@@ -2303,7 +2464,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
       if (e.src !== "device") {
         var ed = el("button", "btn ghost", "Edit"); ed.type = "button"; ed.setAttribute("aria-label", "Edit " + e.title); ed.addEventListener("click", function () { openEv(e, k); });
         var rm = el("button", "btn ghost", "×"); rm.type = "button"; rm.setAttribute("aria-label", "Delete " + e.title);
-        rm.addEventListener("click", function () { phoneForget(e); events = events.filter(function (x) { return x.id !== e.id; }); persist(); render(); fx("del"); syncSoon(); });
+        rm.addEventListener("click", function () { phoneForget(e); gcalForget(e); events = events.filter(function (x) { return x.id !== e.id; }); persist(); render(); fx("del"); syncSoon(); gcalSyncSoon(); });
         act.appendChild(ed); act.appendChild(rm);
       }
       li.appendChild(act); ul.appendChild(li);
@@ -2348,7 +2509,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
     if (evEditId) { var old = events.filter(function (x) { return x.id === evEditId; })[0]; if (old && old.ext) rec.ext = old.ext; events = events.map(function (x) { return x.id === evEditId ? rec : x; }); }
     else { if (events.length >= 500) { $("evMsg").textContent = "That is the limit of 500 events."; return; } events.push(rec); }
     var p = rec.date.split("-"); calM = { y: +p[0], m: +p[1] - 1 }; dayFilter = rec.date;
-    $("evForm").hidden = true; persist(); render(); fx("add"); toast("Event saved."); syncSoon();
+    $("evForm").hidden = true; persist(); render(); fx("add"); toast("Event saved."); syncSoon(); gcalSyncSoon();
   });
 
   /* next up line under the day stamp */
@@ -2611,9 +2772,568 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
     });
     $("phWrite").addEventListener("change", function () { phone.writeCal = this.value; saveP(); phoneSync(); });
     $("phSync").addEventListener("click", phoneSync);
-    document.addEventListener("visibilitychange", function () { if (!document.hidden) { phoneSync(); schedulePhone(); reminderStatus(); } });
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) { phoneSync(); schedulePhone(); reminderStatus(); if (typeof gcalAutoSync === "function") gcalAutoSync(); } });
     reminderStatus(); schedulePhone();
     if (phone.calOn) loadCals().then(phoneSync).catch(function (e) { pMsg("Calendar: " + errText(e)); });
+  }
+
+  /* ---------- Google Calendar integration ---------- */
+  var GKEY = "mission-map-gcal";
+  var gcal = {
+    enabled: false,
+    clientId: "",
+    token: "",
+    tokenExpiry: 0,
+    calId: "primary",
+    cals: [],
+    twoWay: true,
+    autoSync: true,
+    icalUrl: "",
+    last: 0,
+    del: []
+  };
+  try {
+    var rawG = localStorage.getItem(GKEY);
+    if (rawG) {
+      var parsedG = JSON.parse(rawG);
+      if (parsedG && typeof parsedG === "object") {
+        Object.keys(parsedG).forEach(function (k) { if (k in gcal) gcal[k] = parsedG[k]; });
+      }
+    }
+  } catch (e) {}
+
+  function saveGcal() {
+    try { localStorage.setItem(GKEY, JSON.stringify(gcal)); } catch (e) {}
+  }
+
+  function gcalMsg(t) {
+    var el = $("gcalStatus");
+    if (el) el.textContent = t;
+  }
+
+  function gcalColorToName(id) {
+    var idx = parseInt(id, 10);
+    if (idx >= 1 && idx <= 11) return EVCOL[idx - 1][0];
+    return "peacock";
+  }
+
+  function nameToGcalColor(name) {
+    for (var i = 0; i < EVCOL.length; i++) {
+      if (EVCOL[i][0] === name) return String(i + 1);
+    }
+    return "7";
+  }
+
+  function gcalHeaders() {
+    return {
+      "Authorization": "Bearer " + gcal.token,
+      "Content-Type": "application/json"
+    };
+  }
+
+  var gisLoading = false;
+  function loadGis() {
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) return Promise.resolve();
+    if (gisLoading) return Promise.resolve();
+    gisLoading = true;
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = "https://accounts.google.com/gsi/client";
+      s.async = true;
+      s.defer = true;
+      s.onload = function () { gisLoading = false; resolve(); };
+      s.onerror = function () { gisLoading = false; reject(new Error("Failed to load Google Identity Services")); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function gcalRequestToken() {
+    return loadGis().then(function () {
+      if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+        throw new Error("Google Identity Services could not be loaded");
+      }
+      return new Promise(function (resolve, reject) {
+        try {
+          var client = google.accounts.oauth2.initTokenClient({
+            client_id: gcal.clientId,
+            scope: "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly",
+            callback: function (resp) {
+              if (resp && resp.access_token) {
+                gcal.token = resp.access_token;
+                var exp = Number(resp.expires_in) || 3600;
+                gcal.tokenExpiry = Date.now() + (exp - 60) * 1000;
+                gcal.enabled = true;
+                saveGcal();
+                resolve(gcal.token);
+              } else if (resp && resp.error) {
+                reject(new Error(resp.error_description || resp.error));
+              } else {
+                reject(new Error("No token returned by Google"));
+              }
+            }
+          });
+          client.requestAccessToken({ prompt: "" });
+        } catch (err) {
+          reject(err);
+        }
+      });
+    });
+  }
+
+  function eventToGcal(e) {
+    var body = {
+      summary: e.title,
+      description: e.notes || "",
+      location: e.where || (e.place ? placeInfo(e.place).n : ""),
+      colorId: nameToGcalColor(e.color)
+    };
+    if (e.allDay || !e.start) {
+      body.start = { date: e.date };
+      var endD = e.endDate || e.date;
+      var d = new Date(endD + "T00:00:00Z");
+      d.setUTCDate(d.getUTCDate() + 1);
+      body.end = { date: d.toISOString().slice(0, 10) };
+    } else {
+      var p = e.date.split("-"), s = e.start.split(":");
+      var sd = new Date(+p[0], +p[1] - 1, +p[2], +s[0], +s[1]);
+      body.start = { dateTime: sd.toISOString() };
+      var q = (e.endDate || e.date).split("-"), en = (e.end || "").split(":");
+      var ed = e.end ? new Date(+q[0], +q[1] - 1, +q[2], +en[0], +en[1]) : new Date(sd.getTime() + 3600000);
+      if (ed.getTime() <= sd.getTime()) ed = new Date(sd.getTime() + 3600000);
+      body.end = { dateTime: ed.toISOString() };
+    }
+    return body;
+  }
+
+  function gcalItemToEvent(item) {
+    if (!item || item.status === "cancelled") return null;
+    var allDay = false, date = "", endDate = "", start = "", end = "";
+    if (item.start && item.start.date) {
+      allDay = true;
+      date = item.start.date;
+      if (item.end && item.end.date && item.end.date > date) {
+        var ed = new Date(item.end.date + "T00:00:00Z");
+        ed.setUTCDate(ed.getUTCDate() - 1);
+        var edStr = ed.toISOString().slice(0, 10);
+        if (edStr > date) endDate = edStr;
+      }
+    } else if (item.start && item.start.dateTime) {
+      var sd = new Date(item.start.dateTime);
+      date = dkey(sd);
+      start = pad(sd.getHours()) + ":" + pad(sd.getMinutes());
+      if (item.end && item.end.dateTime) {
+        var ed2 = new Date(item.end.dateTime);
+        var ek = dkey(ed2);
+        end = pad(ed2.getHours()) + ":" + pad(ed2.getMinutes());
+        if (ek > date) endDate = ek;
+      }
+    }
+    if (!date) return null;
+    var color = item.colorId ? gcalColorToName(item.colorId) : "peacock";
+    return cleanEvents([{
+      id: "g:" + item.id,
+      title: item.summary || "(no title)",
+      date: date,
+      endDate: endDate,
+      allDay: allDay,
+      start: start,
+      end: end,
+      color: color,
+      place: "",
+      where: item.location || "",
+      notes: item.description || "",
+      remind: -1,
+      src: "gcal",
+      ext: { id: item.id, cal: gcal.calId, sig: item.etag || "" }
+    }])[0];
+  }
+
+  function parseIcalDate(val) {
+    var m = String(val).match(/(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?/);
+    if (!m) return null;
+    var y = m[1], mo = m[2], d = m[3];
+    var dateStr = y + "-" + mo + "-" + d;
+    if (!m[4]) return { allDay: true, date: dateStr, time: "" };
+    var hh = m[4], mm = m[5];
+    if (m[7]) {
+      var dt = new Date(Date.UTC(+y, +mo - 1, +d, +hh, +mm));
+      return { allDay: false, date: dkey(dt), time: pad(dt.getHours()) + ":" + pad(dt.getMinutes()) };
+    }
+    return { allDay: false, date: dateStr, time: hh + ":" + mm };
+  }
+
+  function unescapeIcal(t) {
+    if (!t) return "";
+    return t.replace(/\\n/gi, "\n").replace(/\\,/g, ",").replace(/\\;/g, ";").replace(/\\\\/g, "\\").trim();
+  }
+
+  function unfoldIcal(str) {
+    return str.replace(/\r\n[ \t]/g, "").replace(/\n[ \t]/g, "").replace(/\r[ \t]/g, "");
+  }
+
+  function parseIcal(text) {
+    var clean = unfoldIcal(text);
+    var lines = clean.split(/\r\n|\r|\n/);
+    var out = [];
+    var inEvent = false;
+    var cur = {};
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (line.indexOf("BEGIN:VEVENT") === 0) { inEvent = true; cur = {}; continue; }
+      if (line.indexOf("END:VEVENT") === 0) {
+        if (inEvent && cur.dtstart) {
+          var sInfo = parseIcalDate(cur.dtstart);
+          if (sInfo) {
+            var date = sInfo.date, start = sInfo.allDay ? "" : sInfo.time, end = "", endDate = "";
+            if (cur.dtend) {
+              var eInfo = parseIcalDate(cur.dtend);
+              if (eInfo) {
+                if (sInfo.allDay) {
+                  var sD = new Date(date + "T00:00:00Z"), eD = new Date(eInfo.date + "T00:00:00Z");
+                  if (Math.round((eD - sD) / 86400000) > 1) {
+                    eD.setUTCDate(eD.getUTCDate() - 1);
+                    endDate = eD.toISOString().slice(0, 10);
+                  }
+                } else {
+                  end = eInfo.time;
+                  if (eInfo.date > date) endDate = eInfo.date;
+                }
+              }
+            }
+            var rec = cleanEvents([{
+              id: "g:ics:" + (cur.uid ? cur.uid.replace(/[^a-zA-Z0-9_-]/g, "_") : uid()),
+              title: cur.summary || "(no title)",
+              date: date,
+              endDate: endDate,
+              allDay: sInfo.allDay,
+              start: start,
+              end: end,
+              color: "peacock",
+              place: "",
+              where: cur.location || "",
+              notes: cur.description || "",
+              remind: -1,
+              src: "gcal",
+              ext: { id: cur.uid || "", cal: "ics", sig: "" }
+            }])[0];
+            if (rec) out.push(rec);
+          }
+        }
+        inEvent = false;
+        continue;
+      }
+      if (!inEvent) continue;
+      var colonIdx = line.indexOf(":");
+      if (colonIdx < 0) continue;
+      var prop = line.slice(0, colonIdx), val = line.slice(colonIdx + 1);
+      var propName = prop.split(";")[0].toUpperCase();
+      if (propName === "SUMMARY") cur.summary = unescapeIcal(val);
+      else if (propName === "DESCRIPTION") cur.description = unescapeIcal(val);
+      else if (propName === "LOCATION") cur.location = unescapeIcal(val);
+      else if (propName === "UID") cur.uid = val.trim();
+      else if (propName === "DTSTART") cur.dtstart = val.trim();
+      else if (propName === "DTEND") cur.dtend = val.trim();
+    }
+    return out;
+  }
+
+  function fetchIcal(url) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.text();
+    }).catch(function (err) {
+      var proxy = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+      return fetch(proxy).then(function (r2) {
+        if (!r2.ok) throw err;
+        return r2.text();
+      });
+    });
+  }
+
+  function gcalListCalendars() {
+    if (!gcal.token) return Promise.resolve();
+    return fetch("https://www.googleapis.com/calendar/v3/users/me/calendarList", { headers: gcalHeaders() })
+      .then(function (r) {
+        if (r.status === 401 && gcal.clientId) {
+          return gcalRequestToken().then(function () {
+            return fetch("https://www.googleapis.com/calendar/v3/users/me/calendarList", { headers: gcalHeaders() });
+          });
+        }
+        return r;
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data && Array.isArray(data.items)) {
+          gcal.cals = data.items.map(function (c) {
+            return { id: c.id, summary: c.summary || c.id, primary: !!c.primary };
+          });
+          saveGcal();
+          gcalRenderCals();
+        }
+      })
+      .catch(function (e) {
+        console.warn("Could not list Google calendars", e);
+      });
+  }
+
+  function gcalRenderCals() {
+    var sel = $("gcalSelect");
+    if (!sel) return;
+    sel.textContent = "";
+    var primaryOpt = document.createElement("option");
+    primaryOpt.value = "primary";
+    primaryOpt.textContent = "Primary calendar";
+    sel.appendChild(primaryOpt);
+    (gcal.cals || []).forEach(function (c) {
+      if (c.id === "primary") return;
+      var o = document.createElement("option");
+      o.value = c.id;
+      o.textContent = c.summary + (c.primary ? " (Primary)" : "");
+      sel.appendChild(o);
+    });
+    sel.value = gcal.calId || "primary";
+    if (sel.value !== gcal.calId) sel.value = "primary";
+  }
+
+  function gcalPushEvents() {
+    if (!gcal.token || !gcal.twoWay) return Promise.resolve();
+    var chain = Promise.resolve(), changed = false;
+    var dels = gcal.del.slice();
+    gcal.del = [];
+    saveGcal();
+    dels.forEach(function (id) {
+      chain = chain.then(function () {
+        return fetch("https://www.googleapis.com/calendar/v3/calendars/" + encodeURIComponent(gcal.calId || "primary") + "/events/" + encodeURIComponent(id), {
+          method: "DELETE",
+          headers: gcalHeaders()
+        }).catch(function () {});
+      });
+    });
+    events.forEach(function (e) {
+      if (e.src === "device") return;
+      if (e.src === "gcal" && (!e.ext || e.ext.cal !== (gcal.calId || "primary"))) return;
+      chain = chain.then(function () {
+        var body = eventToGcal(e);
+        var sig = String(hash32([body.summary, body.description, body.location, body.colorId, body.start.date || body.start.dateTime, body.end.date || body.end.dateTime].join("|")));
+        if (e.ext && e.ext.id) {
+          if (e.ext.cal !== (gcal.calId || "primary") || e.ext.sig === sig) return;
+          return fetch("https://www.googleapis.com/calendar/v3/calendars/" + encodeURIComponent(gcal.calId || "primary") + "/events/" + encodeURIComponent(e.ext.id), {
+            method: "PATCH",
+            headers: gcalHeaders(),
+            body: JSON.stringify(body)
+          }).then(function (res) {
+            if (res.ok) { e.ext.sig = sig; changed = true; }
+          }).catch(function () {});
+        } else if (!e.src) {
+          return fetch("https://www.googleapis.com/calendar/v3/calendars/" + encodeURIComponent(gcal.calId || "primary") + "/events", {
+            method: "POST",
+            headers: gcalHeaders(),
+            body: JSON.stringify(body)
+          }).then(function (r) { return r.json(); }).then(function (res) {
+            if (res && res.id) {
+              e.ext = { id: String(res.id), cal: gcal.calId || "primary", sig: sig };
+              e.src = "gcal";
+              changed = true;
+            }
+          }).catch(function () {});
+        }
+      });
+    });
+    return chain.then(function () { if (changed) persist(); });
+  }
+
+  function gcalPullEvents() {
+    if (gcal.token) {
+      var cal = encodeURIComponent(gcal.calId || "primary");
+      var from = new Date(Date.now() - 30 * 86400000).toISOString();
+      var to = new Date(Date.now() + 365 * 86400000).toISOString();
+      var url = "https://www.googleapis.com/calendar/v3/calendars/" + cal + "/events?singleEvents=true&timeMin=" + encodeURIComponent(from) + "&timeMax=" + encodeURIComponent(to) + "&maxResults=250";
+      return fetch(url, { headers: gcalHeaders() })
+        .then(function (r) {
+          if (r.status === 401 && gcal.clientId) {
+            return gcalRequestToken().then(function () {
+              return fetch(url, { headers: gcalHeaders() });
+            });
+          }
+          return r;
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data || !Array.isArray(data.items)) throw new Error(data && data.error ? data.error.message : "Invalid events data");
+          var mine = {};
+          events.forEach(function (e) { if (e.ext && e.src !== "gcal") mine[e.ext.id] = 1; });
+          var gEvents = [];
+          data.items.forEach(function (item) {
+            if (mine[item.id]) return;
+            var ev = gcalItemToEvent(item);
+            if (ev) gEvents.push(ev);
+          });
+          gEvents.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+          events = events.filter(function (e) { return e.src !== "gcal"; }).concat(gEvents);
+          persist();
+          render();
+          return gEvents.length;
+        });
+    } else if (gcal.icalUrl) {
+      return fetchIcal(gcal.icalUrl).then(function (icsText) {
+        var gEvents = parseIcal(icsText);
+        gEvents.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+        events = events.filter(function (e) { return e.src !== "gcal"; }).concat(gEvents);
+        persist();
+        render();
+        return gEvents.length;
+      });
+    }
+    return Promise.reject(new Error("No token or iCal URL configured"));
+  }
+
+  var gcalSyncing = false, gcalSyncT = null;
+  function gcalSync() {
+    if (!gcal.enabled || gcalSyncing) return Promise.resolve();
+    gcalSyncing = true;
+    gcalMsg("Syncing with Google Calendar...");
+    return Promise.resolve()
+      .then(function () {
+        if (gcal.token) {
+          if (gcal.tokenExpiry && Date.now() > gcal.tokenExpiry && gcal.clientId) {
+            return gcalRequestToken();
+          }
+        }
+      })
+      .then(function () {
+        if (gcal.token && !gcal.cals.length) return gcalListCalendars();
+      })
+      .then(function () { return gcalPushEvents(); })
+      .then(function () { return gcalPullEvents(); })
+      .then(function (n) {
+        gcal.last = Date.now();
+        saveGcal();
+        var d = new Date(), timeStr = pad(d.getHours()) + ":" + pad(d.getMinutes());
+        gcalMsg("Synced. " + (n || 0) + " events from Google Calendar at " + timeStr + ".");
+      })
+      .catch(function (e) {
+        gcalMsg("Sync failed: " + (e && e.message ? e.message : String(e)));
+      })
+      .then(function () {
+        gcalSyncing = false;
+        gcalInitUI();
+      });
+  }
+
+  function gcalSyncSoon() {
+    if (!gcal.enabled) return;
+    clearTimeout(gcalSyncT);
+    gcalSyncT = setTimeout(gcalSync, 2000);
+  }
+
+  function gcalAutoSync() {
+    if (gcal.enabled && gcal.autoSync) {
+      if (Date.now() - (gcal.last || 0) > 60000) gcalSync();
+    }
+  }
+
+  function gcalForget(e) {
+    if (e && e.ext && (e.src === "gcal" || e.ext.cal === (gcal.calId || "primary"))) {
+      gcal.del.push(e.ext.id);
+      saveGcal();
+    }
+  }
+
+  function gcalInitUI() {
+    var isConn = gcal.enabled && (!!gcal.token || !!gcal.icalUrl);
+    $("gcalConnect").textContent = isConn ? "Reconnect Google Calendar" : "Connect Google Calendar";
+    $("gcalDisconnect").hidden = !isConn;
+    $("gcalCalBox").hidden = !isConn;
+    $("gcalClientId").value = gcal.clientId || "";
+    $("gcalToken").value = gcal.token ? "••••••••" : "";
+    $("gcalIcalUrl").value = gcal.icalUrl || "";
+    $("gcalTwoWay").checked = gcal.twoWay !== false;
+    $("gcalAuto").checked = gcal.autoSync !== false;
+    gcalRenderCals();
+  }
+
+  function gcalInit() {
+    gcalInitUI();
+    if (gcal.enabled) {
+      if (gcal.last) {
+        var d = new Date(gcal.last), timeStr = pad(d.getHours()) + ":" + pad(d.getMinutes());
+        gcalMsg("Connected. Last synced at " + timeStr + ".");
+      } else {
+        gcalMsg("Connected.");
+      }
+    } else {
+      gcalMsg("Not connected.");
+    }
+    $("gcalConnect").addEventListener("click", function () {
+      if (gcal.clientId) {
+        gcalMsg("Opening Google sign-in...");
+        gcalRequestToken().then(function () {
+          return gcalListCalendars();
+        }).then(function () {
+          return gcalSync();
+        }).catch(function (e) {
+          gcalMsg("Sign in failed: " + (e && e.message ? e.message : String(e)));
+        });
+      } else if (gcal.token || gcal.icalUrl) {
+        gcal.enabled = true;
+        saveGcal();
+        gcalSync();
+      } else {
+        $("gcalSettingsSec").open = true;
+        gcalMsg("Enter your Client ID, an Access Token, or your Secret iCal URL below to connect.");
+      }
+    });
+    $("gcalSyncBtn").addEventListener("click", function () {
+      if (!gcal.enabled) gcal.enabled = true;
+      gcalSync();
+    });
+    $("gcalDisconnect").addEventListener("click", function () {
+      gcal.enabled = false;
+      gcal.token = "";
+      gcal.tokenExpiry = 0;
+      saveGcal();
+      events = events.filter(function (e) { return e.src !== "gcal"; });
+      persist();
+      render();
+      gcalInitUI();
+      gcalMsg("Disconnected from Google Calendar.");
+    });
+    $("gcalSelect").addEventListener("change", function () {
+      gcal.calId = this.value;
+      saveGcal();
+      gcalSync();
+    });
+    $("gcalTwoWay").addEventListener("change", function () {
+      gcal.twoWay = this.checked;
+      saveGcal();
+    });
+    $("gcalAuto").addEventListener("change", function () {
+      gcal.autoSync = this.checked;
+      saveGcal();
+    });
+    $("gcalSaveCfg").addEventListener("click", function () {
+      var cid = $("gcalClientId").value.trim();
+      var tok = $("gcalToken").value.trim();
+      var ical = $("gcalIcalUrl").value.trim();
+      gcal.clientId = cid;
+      if (tok && tok !== "••••••••") {
+        gcal.token = tok.replace(/^Bearer\s+/i, "");
+        gcal.tokenExpiry = Date.now() + 3600 * 1000;
+      }
+      gcal.icalUrl = ical;
+      if (cid || gcal.token || ical) gcal.enabled = true;
+      saveGcal();
+      gcalInitUI();
+      gcalMsg("Settings saved. Connecting...");
+      if (gcal.token || gcal.icalUrl) {
+        gcalSync();
+      } else if (cid) {
+        $("gcalConnect").click();
+      }
+    });
+    if (gcal.enabled && gcal.autoSync) {
+      gcalAutoSync();
+    }
   }
 
   /* music stops when the app goes to the background or the screen turns off, and carries on when you come back */
@@ -2811,16 +3531,36 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
   var faceHTML = {};
   function setFace(which, url) {
     var f = document.querySelector(".pin3d .face." + which); if (!f) return;
-    if (faceHTML[which] === undefined) faceHTML[which] = f.innerHTML;
     if ((f.getAttribute("data-u") || "") === (url || "")) return;
     f.setAttribute("data-u", url || "");
-    if (url) { f.textContent = ""; var im = new Image(); im.alt = ""; im.src = url; f.appendChild(im); } else f.innerHTML = faceHTML[which];
+    if (url) {
+      f.textContent = "";
+      var im = new Image();
+      im.alt = which === "front" ? "Smiley" : "Evil";
+      im.src = url;
+      f.appendChild(im);
+    }
   }
   function applyMedia() {
     var m = $("map"), mu = urls["i:map"];
     if (m) { var want = mu ? 'url("' + mu + '")' : ""; if (m.style.backgroundImage !== want) m.style.backgroundImage = want; }
     $("mapcard").classList.toggle("no-sketch", !!mu && !mmeta.sketch);
-    setFace("front", urls["i:pinSmile"] || urls["i:pinMap"] || ""); setFace("back", urls["i:pinEvil"] || urls["i:pinMap"] || "");
+    var defSmile = opts.pinAlt ? "pins/alt-smile.webp" : "pins/base-smile.png";
+    var defEvil = opts.pinAlt ? "pins/alt-evil.webp" : "pins/base-evil.png";
+    setFace("front", urls["i:pinSmile"] || urls["i:pinMap"] || defSmile);
+    setFace("back", urls["i:pinEvil"] || urls["i:pinMap"] || defEvil);
+    var imgSmile = $("pinSmileImg");
+    if (imgSmile) {
+      var sUrl = urls["i:pinSmile"] || urls["i:pinMap"] || defSmile;
+      imgSmile.setAttribute("href", sUrl);
+      imgSmile.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", sUrl);
+    }
+    var imgEvil = $("pinEvilImg");
+    if (imgEvil) {
+      var eUrl = urls["i:pinEvil"] || urls["i:pinMap"] || defEvil;
+      imgEvil.setAttribute("href", eUrl);
+      imgEvil.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", eUrl);
+    }
     var w = urls["w:" + view], b = document.body;
     if (w) { if (b.style.getPropertyValue("--wall") !== 'url("' + w + '")') b.style.setProperty("--wall", 'url("' + w + '")'); } else b.style.removeProperty("--wall");
     b.classList.toggle("has-wall", !!w);
@@ -3059,7 +3799,7 @@ body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) 
   }
 
   /* ---------- start ---------- */
-  buildMap(); fillSelect(); applyOpts(); render(); initDb(); mediaInit(); phoneInit();
+  buildMap(); fillSelect(); applyOpts(); render(); initDb(); mediaInit(); phoneInit(); gcalInit();
   setInterval(updateSky, 60000);
 })();
 </script>
