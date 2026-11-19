@@ -1,6 +1,7 @@
 <title>Mission Map</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="fonts.css">
+<link id="mytheme" rel="stylesheet" href="mytheme.css">
 <style>
 /* Layout: a day-stamped header, then a pencil-sketched town map beside a paper mission list; the Notes view swaps both for a cork board of sticky notes. */
 :root {
@@ -242,7 +243,7 @@ body[data-view="errands"] .btn { --wob: #000; }
 /* ===== v2: pin, meters, week, road, race, toast ===== */
 .wrap { position: relative; z-index: 1; }
 .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.pinbtn { background: none; border: 0; padding: 0; width: 44px; height: 60px; flex: none; perspective: 500px; transform-origin: 50% 8%; animation: sway 5s ease-in-out infinite; cursor: pointer; }
+.pinbtn { background: none; border: 0; padding: 0; width: 60px; height: 60px; flex: none; perspective: 500px; transform-origin: 50% 8%; animation: sway 5s ease-in-out infinite; cursor: pointer; }
 @keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
 .pin3d { display: block; position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.3, 1.35, .5, 1); }
 .pinbtn[aria-pressed="true"] .pin3d { transform: rotateY(180deg); }
@@ -513,7 +514,7 @@ body.wob-all [data-wa] { border-color: transparent !important; }
 .evact .btn { min-width: 40px; min-height: 40px; padding: 0 8px; }
 .evform { border: 2px dashed var(--ink); background: var(--paper); color: var(--ink); padding: 12px; display: grid; gap: 8px; }
 .evform input, .evform select, .evform textarea { font: inherit; color: var(--ink); background: transparent; border: 2px solid var(--ink); padding: 8px; min-height: 44px; min-width: 0; width: 100%; box-sizing: border-box; }
-.evform .chk input { width: auto; min-height: 0; }
+.evform .chk input { min-height: 0; }
 .evform .chk select { width: auto; flex: 1; }
 .evrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .evrow label { display: grid; gap: 2px; font-size: 12px; color: var(--ink-soft); letter-spacing: .04em; }
@@ -522,6 +523,96 @@ body.wob-all [data-wa] { border-color: transparent !important; }
 .sw.on { box-shadow: 0 0 0 3px var(--ink); }
 .nextev { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--ink); margin-top: 4px; }
 .evdot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+
+
+/* ===== v16: missions first, floating add button, bigger touch targets ===== */
+.wrap { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+.fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 25; width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--ink); background: var(--red); color: var(--on-red); font-size: 34px; line-height: 1; padding: 0 0 4px; box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); transition: transform .2s; }
+.fab.x { transform: rotate(45deg); }
+.scrim { position: fixed; inset: 0; z-index: 15; background: rgba(0, 0, 0, .35); }
+.add.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; max-width: 560px; margin: 0 auto; max-height: 85vh; overflow: auto; padding: 14px 16px calc(84px + env(safe-area-inset-bottom, 0px)); background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-bottom: 0; box-shadow: 0 -6px 0 rgba(0, 0, 0, .18); }
+.sheethead { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; letter-spacing: .08em; text-transform: uppercase; font-size: 13px; }
+.sheethead b { font-weight: 400; }
+.toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 859px) { #listSec { order: -1; } }
+.days.views { margin-top: 6px; }
+.views .daybtn, .views .daybtn.wrapbtn { margin-left: 0; flex-direction: row; min-width: 96px; min-height: 44px; font-size: 13px; }
+.daybtn.hot { border-color: var(--red); color: var(--ink); }
+.daybtn.hot[aria-pressed="true"] { color: var(--on-red); }
+.meters { gap: 4px 12px; font-size: 11px; }
+.stress { font-size: 11px; }
+.stress .meter { width: 84px; height: 10px; border-width: 1px; }
+.stress .meter i { background-size: 84px 100%; }
+.stress b { min-width: 5em; }
+.rankbox { font-size: 11px; border-width: 1px; padding: 2px 6px; }
+input[type="checkbox"] { width: 24px; height: 24px; flex: none; margin: 0; accent-color: var(--ink); }
+label.chk { display: flex; align-items: center; gap: 12px; min-height: 48px; }
+.suggest label.chk { font-size: 14px; }
+.seg button { min-height: 44px; }
+select, .opts select { min-height: 44px; }
+.pic { min-width: 44px; min-height: 44px; }
+.foot, .msg { font-size: 13px; }
+.evform .chk input[type="checkbox"] { width: 24px; min-height: 24px; }
+.sample button { min-height: 44px; padding: 0 8px; }
+#raceMin { min-width: 64px; }
+body .btn.fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 40; width: auto; min-width: 104px; height: 52px; border-radius: 0; padding: 0 22px; background: var(--paper); color: var(--red); border: 2px solid var(--red); --wob: var(--red); font-size: 18px; letter-spacing: .14em; text-transform: uppercase; box-shadow: 3px 3px 0 rgba(0, 0, 0, .3); transform: none; }
+body .btn.fab:active { transform: translateY(1px); }
+.sq5 { width: 120px; height: 24px; color: var(--ink); flex: none; }
+.sq5 svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.stress b { min-width: 0; letter-spacing: .06em; text-transform: none; font-size: 13px; color: var(--red); }
+body.sr:is([data-view="map"], [data-view="notes"], [data-view="zine"], [data-view="wanted"], [data-view="comic"]) .t::after {
+  background: var(--red); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M0 6 C12 2 26 9 42 5 S72 2 100 4.5' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M0 6 C12 2 26 9 42 5 S72 2 100 4.5' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+
+/* map number stamps, in the Smash font (embedded) */
+@font-face { font-family: "Smash"; src: url("fonts/smash.ttf") format("truetype"); font-display: swap; }
+:root { --font-stamp: "Smash", "Bangers", Impact, sans-serif; }
+.stp { opacity: .92; }
+.stpo { fill: none; stroke: var(--red); stroke-width: 2.2; }
+.stpi { fill: none; stroke: var(--red); stroke-width: 1; }
+.stpt { fill: var(--red); stroke: var(--red); stroke-width: .5; font-family: var(--font-stamp); font-size: 19px; text-anchor: middle; letter-spacing: .02em; }
+.stpx { fill: none; stroke: var(--red); stroke-width: 2.6; stroke-linecap: round; }
+
+/* chosen fonts (Options > Fonts). The stamp numbers keep Smash. */
+body.fo-all :not(.stpt):not(svg) { font-family: var(--fo-all) !important; }
+body.fo-all svg text:not(.stpt) { font-family: var(--fo-all) !important; }
+body.fo-m .t, body.fo-m .note .t, body.fo-m .item .t { font-family: var(--fo-m) !important; }
+.needle { display: var(--needle, inline); }
+.pinbtn .pin3d svg { --needle: none; }
+
+/* daily practice card */
+.practice { margin: 18px 0 0; padding: 12px 16px 14px; border: 2px dashed var(--ink); background: var(--paper); color: var(--ink); }
+.practice.done { opacity: .72; }
+.pr-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.pr-kicker { color: var(--red); }
+.pr-title { margin: 6px 0 2px; font-family: var(--font-hand, inherit); font-size: 26px; font-weight: 700; line-height: 1.1; }
+.pr-text { margin: 4px 0 8px; font-size: 15px; line-height: 1.45; }
+.pr-note { margin: 0 0 8px; font-size: 13px; line-height: 1.4; color: var(--ink-soft); font-style: italic; }
+.pr-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.pr-row .btn { min-height: 44px; }
+.pr-pick { align-items: center; margin-top: 10px; }
+.pr-pick label { flex: 1 1 100%; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.pr-pick select { flex: 1 1 160px; min-width: 0; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); font: inherit; font-size: 14px; padding: 0 8px; }
+.practice.pinned { border-style: solid; }
+.mapnote { margin: 10px 0 0; padding: 8px 12px 10px; background: #ffe45e; color: #26210a; border: 2px solid #26210a; transform: rotate(-.8deg); box-shadow: 3px 3px 0 rgba(0, 0, 0, .25); }
+.mn-kicker { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; }
+.mn-text { margin-top: 4px; font-size: 14px; line-height: 1.4; }
+
+/* ambient screen */
+.aod { position: fixed; inset: 0; z-index: 90; background: #000; color: #8c8c8c; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
+.aod[hidden] { display: none; }
+.aod-in { width: min(92vw, 520px); text-align: center; transition: transform 2s linear; }
+.aod-time { font-family: "Smash", "Special Elite", monospace; font-size: min(30vw, 150px); line-height: 1; color: #b9b9b9; letter-spacing: .02em; }
+.aod-date { margin-top: 6px; font-size: 17px; letter-spacing: .12em; text-transform: uppercase; color: #7a7a7a; }
+.aod-next { margin-top: 22px; font-size: 18px; color: #c04a3a; }
+.aod-list { list-style: none; margin: 22px 0 0; padding: 0; font-family: var(--font-hand, inherit); font-size: 26px; line-height: 1.25; color: #9a9a9a; }
+.aod-list li { margin: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aod-list .more { font-size: 18px; color: #666; font-family: inherit; }
+.aod-stress { margin-top: 26px; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 12px; letter-spacing: .14em; color: #666; }
+.aod-sq { width: 120px; height: 24px; color: #8a8a8a; }
+.aod-sq svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.aod-pin { margin: 20px auto 0; max-width: 90%; padding: 6px 10px; border: 1px solid #5a4d12; color: #b59b22; font-size: 14px; letter-spacing: .06em; }
+.aod-hint { margin-top: 28px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #3d3d3d; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -530,27 +621,22 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     <radialGradient id="gEv" cx=".36" cy=".3" r=".85"><stop offset="0" stop-color="#ffb0a0"/><stop offset=".4" stop-color="#e5301f"/><stop offset=".8" stop-color="#9c1308"/><stop offset="1" stop-color="#4f0602"/></radialGradient>
     <radialGradient id="gSpec" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
     <linearGradient id="gMetal" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#6e7378"/><stop offset=".35" stop-color="#f4f6f8"/><stop offset=".6" stop-color="#9aa0a6"/><stop offset="1" stop-color="#4a4e52"/></linearGradient>
+    <filter id="stampInk" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.6"/></filter>
     <filter id="pinBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6"/></filter>
     <g id="pinSmile">
+      <g class="needle">
       <ellipse cx="31" cy="61.5" rx="11" ry="2.6" fill="#000" opacity=".3" filter="url(#pinBlur)"/>
       <path d="M22.4 38 L25.6 38 L24.5 62 L23.5 62 Z" fill="url(#gMetal)"/>
       <ellipse cx="24" cy="38" rx="6.4" ry="2.3" fill="url(#gMetal)"/>
-      <circle cx="24" cy="22" r="18" fill="url(#gSm)"/>
-      <circle cx="24" cy="22" r="17.6" fill="none" stroke="#7a4f00" stroke-opacity=".5" stroke-width="1"/>
-      <ellipse cx="14.2" cy="26" rx="3.2" ry="2" fill="#ff7a3c" opacity=".35"/>
-      <ellipse cx="33.8" cy="26" rx="3.2" ry="2" fill="#ff7a3c" opacity=".35"/>
-      <ellipse cx="17.5" cy="18.5" rx="2.4" ry="3.6" fill="#3b2800"/>
-      <ellipse cx="30.5" cy="18.5" rx="2.4" ry="3.6" fill="#3b2800"/>
-      <circle cx="18.2" cy="16.9" r="0.9" fill="#fff" opacity=".9"/>
-      <circle cx="31.2" cy="16.9" r="0.9" fill="#fff" opacity=".9"/>
-      <path d="M13.5 26.5 Q24 37.5 34.5 26.5" fill="none" stroke="#3b2800" stroke-width="2.6" stroke-linecap="round"/>
-      <ellipse cx="30" cy="34" rx="8" ry="3" fill="#fff" opacity=".16"/>
-      <ellipse cx="16.5" cy="11" rx="7.5" ry="4.4" transform="rotate(-30 16.5 11)" fill="url(#gSpec)"/>
+      </g>
+      <image href="smile-pin.png" x="5.5" y="3.5" width="37" height="37" preserveAspectRatio="xMidYMid meet"/>
     </g>
     <g id="pinEvil">
+      <g class="needle">
       <ellipse cx="31" cy="61.5" rx="11" ry="2.6" fill="#000" opacity=".3" filter="url(#pinBlur)"/>
       <path d="M22.4 38 L25.6 38 L24.5 62 L23.5 62 Z" fill="url(#gMetal)"/>
       <ellipse cx="24" cy="38" rx="6.4" ry="2.3" fill="url(#gMetal)"/>
+      </g>
       <path d="M10 11 C4 7 3 -1 7 -6 C9 0 14 3 18 5 Z" fill="url(#gEv)"/>
       <path d="M38 11 C44 7 45 -1 41 -6 C39 0 34 3 30 5 Z" fill="url(#gEv)"/>
       <circle cx="24" cy="22" r="18" fill="url(#gEv)"/>
@@ -574,8 +660,8 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     <div class="brand">
       <button class="pinbtn" id="pinBtn" type="button" aria-pressed="false" aria-label="Flip the pin to switch between missions and the shouldn't-do list">
         <span class="pin3d">
-          <span class="face front"><svg viewBox="0 -8 48 72" aria-hidden="true"><use href="#pinSmile"/></svg></span>
-          <span class="face back"><svg viewBox="0 -8 48 72" aria-hidden="true"><use href="#pinEvil"/></svg></span>
+          <span class="face front"><svg viewBox="5 3 38 38" aria-hidden="true"><use href="#pinSmile"/></svg></span>
+          <span class="face back"><svg viewBox="5 3 38 38" aria-hidden="true"><use href="#pinEvil"/></svg></span>
         </span>
       </button>
       <div>
@@ -585,10 +671,11 @@ body.wob-all [data-wa] { border-color: transparent !important; }
       </div>
     </div>
     <button class="btn ghost" id="optBtn" type="button" aria-expanded="false" aria-controls="options">Options</button>
+    <button class="btn ghost" id="aodBtn" type="button">Ambient</button>
   </header>
 
   <div class="meters" id="meters" hidden>
-    <div class="stress" id="stressBox"><span>Stress</span><div class="meter"><i id="stressFill"></i></div><b id="stressWord">Calm</b></div>
+    <div class="stress" id="stressBox"><span>Stress</span><div class="sq5" id="stressSq" role="img" aria-label="Stress"></div><b id="stressWord" hidden>Good Luck.</b></div>
     <div class="rankbox" id="rankBox"></div>
     <div class="adbox" id="adBox" hidden></div>
   </div>
@@ -613,6 +700,8 @@ body.wob-all [data-wa] { border-color: transparent !important; }
         <label class="chk"><input type="checkbox" id="weekOn"> Week strip and Friday wrap-up</label>
         <label class="chk"><input type="checkbox" id="hasOn"> Random hassles on new missions</label>
         <label class="chk"><input type="checkbox" id="strsOn"> Stress meter</label>
+        <label class="chk"><input type="checkbox" id="srOn"> Stress darkens every red in the app</label>
+        <label class="chk"><input type="checkbox" id="prOn"> Daily practice card (one exercise a day; you can pick one and pin it by the map)</label>
         <label class="chk"><input type="checkbox" id="brOn"> "Bring" field on missions</label>
         <div class="msg">Achievements</div>
         <ul class="achs" id="achList"></ul>
@@ -642,10 +731,27 @@ body.wob-all [data-wa] { border-color: transparent !important; }
       <summary>Map</summary>
       <div class="grp">
         <label class="chk"><input type="checkbox" id="fogOn"> Fog of war</label>
+        <label class="chk"><input type="checkbox" id="stRoundOn"> Round number stamps (off: square)</label>
         <div class="row-actions"><button class="btn ghost" id="refog" type="button">Bring the fog back</button></div>
         <label class="chk"><input type="checkbox" id="movOn"> Moving details: traffic and time of day</label>
         <label class="chk"><input type="checkbox" id="mapAllOn"> Show the map in every theme</label>
         <div class="msg" id="mapMsg">Use Drop a pin under the map to add your own places.</div>
+      </div>
+    </details>
+    <details>
+      <summary>Fonts</summary>
+      <div class="grp">
+        <label class="chk" for="fontAll">All text <select id="fontAll"></select></label>
+        <label class="chk" for="fontMission">Mission titles only <select id="fontMission"></select></label>
+        <div class="msg">"Theme" keeps each theme's own fonts. Any letter a font lacks falls back to the theme font. Map numbers always use Smash.</div>
+      </div>
+    </details>
+    <details>
+      <summary>Ambient screen</summary>
+      <div class="grp">
+        <label class="chk" for="aodIdle">Start by itself after <select id="aodIdle"><option value="0">Never</option><option value="2">2 min idle</option><option value="5">5 min idle</option><option value="10">10 min idle</option><option value="30">30 min idle</option></select></label>
+        <label class="chk" for="aodLevel">Screen brightness (app only) <select id="aodLevel"><option value="3">Very dim</option><option value="10">Dim</option><option value="25">Medium</option></select></label>
+        <div class="msg">A black always-on screen with the clock, your next event, open missions and stress. The screen stays awake while it is on. Tap anywhere to leave. Black pixels are switched off on OLED phones, so it is easy on the battery. Brightness and keeping the screen on work in the Android app; in a browser the page stays awake if the browser allows it.</div>
       </div>
     </details>
     <details>
@@ -747,7 +853,9 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     <div class="row-actions"><button class="btn ghost" id="optClose" type="button">Close</button></div>
   </section>
 
-  <form class="add" id="addForm" autocomplete="off">
+  <div class="scrim" id="scrim" hidden></div>
+  <form class="add sheet" id="addForm" autocomplete="off" aria-label="Add a mission" hidden>
+    <div class="sheethead"><b>New mission</b><button class="btn ghost" type="button" id="addClose">Cancel</button></div>
     <input id="newText" maxlength="80" placeholder="New mission" aria-label="New mission">
     <select id="newPlace" aria-label="Where"></select>
     <button class="btn" type="submit" id="addBtn">Add</button>
@@ -758,6 +866,7 @@ body.wob-all [data-wa] { border-color: transparent !important; }
 
   <section class="week" id="week" hidden aria-label="Week">
     <div class="days" id="days"></div>
+    <div class="days views" id="views"></div>
   </section>
   <section class="suggest" id="wrap" hidden aria-label="Week wrap-up"></section>
   <section class="cal" id="cal" hidden aria-label="Month calendar"></section>
@@ -788,6 +897,7 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     <section class="mapcard" id="mapcard" aria-label="Town map">
       <span class="hint" id="mapHint">tap a place to filter</span>
       <svg id="map" viewBox="0 0 400 300" role="img" aria-label="Sketch map of the town"></svg>
+      <div class="mapnote" id="mapNote" hidden></div>
       <div class="mapbar">
         <button class="btn ghost" id="dropBtn" type="button">Drop a pin</button>
         <span id="pinCount"></span>
@@ -811,6 +921,7 @@ body.wob-all [data-wa] { border-color: transparent !important; }
         </div>
       </div>
       <ul class="notes" id="notesList" hidden></ul>
+      <section class="practice" id="practice" hidden aria-label="Daily practice"></section>
     </section>
   </main>
 
@@ -838,6 +949,18 @@ body.wob-all [data-wa] { border-color: transparent !important; }
   </section>
   <div class="foot" id="status"></div>
 </div>
+<div class="aod" id="aod" hidden role="dialog" aria-label="Ambient screen">
+  <div class="aod-in" id="aodIn">
+    <div class="aod-time" id="aodTime"></div>
+    <div class="aod-date" id="aodDate"></div>
+    <div class="aod-next" id="aodNext"></div>
+    <ul class="aod-list" id="aodList"></ul>
+    <div class="aod-stress"><span>STRESS</span><div class="aod-sq" id="aodSq"></div></div>
+    <div class="aod-pin" id="aodPin" hidden></div>
+    <div class="aod-hint">tap to wake</div>
+  </div>
+</div>
+<button class="btn fab" id="fab" type="button" aria-expanded="false" aria-controls="addForm">Add</button>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script>
@@ -887,6 +1010,7 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     "Neon Noodles, open until the sun says otherwise.", "Ask your mechanic about gravity.",
     "Left Lane Lemonade. Sip responsibly.", "The Night Shift hour is brought to you by thermos coffee."];
   var THEMES = [["map", "Map"], ["notes", "Notes"], ["errands", "Errands"], ["racer", "Racer"], ["zine", "Zine"], ["wanted", "Wanted"], ["receipt", "Receipt"], ["comic", "Comic"]];
+  if (document.getElementById("mytheme")) THEMES.push(["mine", "Custom"]);
   var GRID = { notes: 1, wanted: 1 };
   var RANKS = [[0, "Rookie"], [50, "Courier"], [150, "Roadie"], [300, "Street racer"], [600, "Road king"]];
   var DAYN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -1028,7 +1152,6 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     });
     s += '</g>';
     s += '<g id="traffic"></g><rect id="tint" width="400" height="300" fill="#000" opacity="0" pointer-events="none"/><g id="sky" pointer-events="none"></g>';
-    s += '<text class="maptitle" x="12" y="291" transform="rotate(-1.5 12 291)">MAP MUZEK</text>';
     Object.keys(PLACES).forEach(function (k) {
       var p = PLACES[k];
       s += '<g class="place" data-p="' + k + '" tabindex="0" role="button" aria-label="' + p.n + '" transform="translate(' + p.x + ' ' + p.y + ')">' +
@@ -1100,8 +1223,7 @@ body.wob-all [data-wa] { border-color: transparent !important; }
       var tx = svgEl("text", { "class": "plabel", y: 13 }); tx.textContent = p.name; g.appendChild(tx);
       var b = svgEl("g", { "class": "badge", transform: "translate(12 -26)" });
       var open = mine.filter(function (i) { return i.place === k && !i.done; }).length, all = mine.filter(function (i) { return i.place === k; }).length;
-      if (all && open) { b.appendChild(svgEl("circle", { "class": "bdg", r: 9 })); var bt = svgEl("text", { "class": "bdgt", y: 4.5 }); bt.textContent = String(open); b.appendChild(bt); }
-      else if (all) { b.appendChild(svgEl("circle", { "class": "bdgx", r: 9 })); b.appendChild(svgEl("path", { "class": "bdgm", d: "M-4-4L4 4M4-4L-4 4" })); }
+      b.innerHTML = stampHTML(open, all, k);
       g.appendChild(b);
       layer.appendChild(g);
     });
@@ -1129,7 +1251,7 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     var row = el("button", "row"); row.type = "button";
     row.setAttribute("aria-pressed", it.done ? "true" : "false");
     var box = el("span", "box");
-    box.innerHTML = '<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M5 6C10 11 17 18 23 23M23 5C17 11 11 18 5 24"/></svg>';
+    box.innerHTML = '<svg viewBox="0 0 28 28" aria-hidden="true"></svg>'; if (it.done) drawBox(box.firstChild);
     var wrap = el("span", "txtwrap");
     var t = el("span", "t" + (it.done && it.id !== lastToggled ? " struck" : ""));
     if (view === "zine") ransom(t, it.text); else t.textContent = it.text;
@@ -1166,14 +1288,167 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     return Math.min(100, v);
   }
   function rankFor(c) { var r = RANKS[0], nx = null; for (var i = 0; i < RANKS.length; i++) { if (c >= RANKS[i][0]) { r = RANKS[i]; nx = RANKS[i + 1] || null; } } return { n: r[1], next: nx }; }
+  /* daily practice: one defusion exercise a day, from the group notes (ACT, cognitive defusion). Cycles through all of them, "Another" skips ahead. */
+  var PRACTICE = [
+    ["A", "Word repetition", "Boil the thought (e.g. \"I'm inadequate\") down to one word and repeat it out loud for 20-30 seconds. Notice the sound of it as the meaning fades."],
+    ["A", "Silly voices", "Say \"I won't pass the exam\" in the voice of your favourite cartoon character."],
+    ["A", "Sing it", "Sing \"I'm a failure\" to a melody, like a song."],
+    ["A", "Another language", "Translate the thought into another language (e.g. \"I'm a failure\") and pay attention to how it sounds."],
+    ["B", "Thoughts aren't causes", "Open the cover of your book even while the thought \"I'm not studying\" is there. A thought and an action can exist at the same time."],
+    ["B", "Carrying cards", "Write the troubling thought (e.g. \"Inadequate\") on a card and carry it in your hand or pocket while you carry on with what you were doing."],
+    ["C", "Having thoughts", "Instead of \"I'm a failure\", say \"I'm having the thought that I'm a failure\"."],
+    ["C", "Cubbyholing", "Sort the thought: is it a prediction, a prejudice, a comparison?"],
+    ["C", "Creating a new story", "Write an alternative to the story \"I'm someone who always procrastinates\"."],
+    ["C", "I am...", "\"I am lazy, smart, anxious, brave...\" Can one person not be all of these at once?"],
+    ["C", "Chain of reasons", "\"Why am I not improving? Because I'm anxious. Why am I anxious? Because I'm afraid of failing.\" Follow the chain with Socratic questions."],
+    ["C", "Mental appreciation", "\"Thanks, mind, for reminding me that I'll fail again.\" Thank your thought, kindly."],
+    ["C", "Bad cup metaphor", "\"This is a ceramic cup, 250 mL.\" Calling a cracked cup \"bad\" is a judgement, not a property of the cup. Try the same with your thought."],
+    ["D", "Leaves on a stream", "Write \"I won't pass the exam\" on a leaf, set it on a stream and watch it float away."],
+    ["D", "Physicalizing", "Imagine the thought or the anxiety as an object: what shape, colour, size and weight is it?"],
+    ["D", "Content on cards", "Write thoughts like \"Everyone is more successful than me\" on separate cards and read them as someone looking at a card."],
+    ["D", "Passengers on the bus", "You are driving the bus. Some passengers say \"you can't do it\". Keep driving in the direction you want to go, despite them."],
+    ["D", "Hands as thoughts", "Hold your hands in front of your face: the thoughts block your view. Then slowly move them away and notice your view widen."]
+  ];
+  var PR_NOTE = { A: "The aim is not to make the thought funny or to shrink it; it is to loosen its automatic hold and meaning.", B: "", C: "", D: "" };
+  var PR_GROUP = { A: "Words and sounds", B: "Thought and action", C: "A different frame", D: "Outside of you" };
+  function prState() {
+    var d = new Date(), key = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(), s = null;
+    try { s = JSON.parse(localStorage.getItem("mission-map-practice")); } catch (e) {}
+    if (!s || s.d !== key) s = { d: key, skip: 0, done: false, pick: null };
+    return s;
+  }
+  function prSave(q) { try { localStorage.setItem("mission-map-practice", JSON.stringify(q)); } catch (e) {} }
+  function prPinned() { var v = -1; try { v = parseInt(localStorage.getItem("mission-map-pin"), 10); } catch (e) {} return v >= 0 && v < PRACTICE.length ? v : -1; }
+  function prToday(s) {
+    if (s.pick !== null && s.pick >= 0 && s.pick < PRACTICE.length) return s.pick;
+    var t = new Date(), day = Math.floor((new Date(t.getFullYear(), t.getMonth(), t.getDate()) - new Date(2026, 0, 1)) / 864e5);
+    return ((day + s.skip) % PRACTICE.length + PRACTICE.length) % PRACTICE.length;
+  }
+  /* the approach you pinned stays highlighted next to the map as a reminder */
+  function renderMapNote() {
+    var n = $("mapNote"); if (!n) return;
+    var i = prPinned();
+    if (!opts.practiceOn || i < 0) { n.hidden = true; return; }
+    n.hidden = false; n.innerHTML = "";
+    var k = document.createElement("div"); k.className = "mn-kicker"; k.textContent = "Remember: " + PRACTICE[i][1];
+    var tx = document.createElement("div"); tx.className = "mn-text"; tx.textContent = PRACTICE[i][2];
+    n.appendChild(k); n.appendChild(tx);
+  }
+  function renderPractice() {
+    var box = $("practice"); if (!box) return;
+    renderMapNote();
+    if (!opts.practiceOn) { box.hidden = true; return; }
+    var s = prState(), idx = prToday(s), p = PRACTICE[idx], pinned = prPinned() === idx;
+    box.hidden = false; box.className = "practice" + (s.done ? " done" : "") + (pinned ? " pinned" : "");
+    box.innerHTML = "";
+    function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt) e.textContent = txt; return e; }
+    var h = el("div", "pr-head"); h.appendChild(el("span", "pr-kicker", "Today's mind trick"));
+    h.appendChild(el("span", "pr-group", PR_GROUP[p[0]])); box.appendChild(h);
+    box.appendChild(el("h3", "pr-title", p[1])); box.appendChild(el("p", "pr-text", p[2]));
+    if (PR_NOTE[p[0]]) box.appendChild(el("p", "pr-note", PR_NOTE[p[0]]));
+    var row = el("div", "pr-row");
+    var dn = el("button", "btn" + (s.done ? "" : " ghost"), s.done ? "Done today" : "I tried it"); dn.type = "button";
+    dn.setAttribute("aria-pressed", String(!!s.done));
+    dn.addEventListener("click", function () { var q = prState(); q.done = !q.done; prSave(q); renderPractice(); fx("click"); });
+    var pn = el("button", "btn" + (pinned ? "" : " ghost"), pinned ? "Pinned by the map" : "Pin by the map"); pn.type = "button";
+    pn.setAttribute("aria-pressed", String(pinned));
+    pn.addEventListener("click", function () { try { if (prPinned() === idx) localStorage.removeItem("mission-map-pin"); else localStorage.setItem("mission-map-pin", String(idx)); } catch (e) {} renderPractice(); fx("click"); });
+    row.appendChild(dn); row.appendChild(pn); box.appendChild(row);
+    var row2 = el("div", "pr-row pr-pick");
+    var lb = el("label", "", "Choose one yourself"); lb.setAttribute("for", "prPick");
+    var sel = document.createElement("select"); sel.id = "prPick";
+    PRACTICE.forEach(function (q, k) { var o = document.createElement("option"); o.value = String(k); o.textContent = q[0] + ". " + q[1]; if (k === idx) o.selected = true; sel.appendChild(o); });
+    sel.addEventListener("change", function () { var q = prState(); q.pick = parseInt(this.value, 10); q.done = false; prSave(q); renderPractice(); fx("click"); });
+    var an = el("button", "btn ghost", "Another"); an.type = "button";
+    an.addEventListener("click", function () { var q = prState(); if (q.pick !== null) { q.skip = 0; q.pick = (q.pick + 1) % PRACTICE.length; } else q.skip++; q.done = false; prSave(q); renderPractice(); fx("click"); });
+    row2.appendChild(lb); row2.appendChild(sel); row2.appendChild(an); box.appendChild(row2);
+  }
+  /* stress: five little squares, white to dark red, scribbled more wildly towards the fifth */
+  var stressLvl = 0, SQCOL = ["#ffffff", "#f3b9a6", "#e2583f", "#b3170f", "#6e0808"];
+  var crossLight = false;
+  function drawStress(boxArg, light) {
+    var box = boxArg || $("stressSq"); if (!box) return;
+    crossLight = !!light;
+    var NS = "http://www.w3.org/2000/svg", s = box.firstChild;
+    if (!s) { s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", "0 0 150 30"); s.setAttribute("aria-hidden", "true"); box.appendChild(s); }
+    while (s.firstChild) s.removeChild(s.firstChild);
+    function j(a) { return (Math.random() - 0.5) * 2 * a; }
+    function quad(x, y, z, a) {
+      var p = [[x + j(a), y + j(a)], [x + z + j(a), y + j(a)], [x + z + j(a), y + z + j(a)], [x + j(a), y + z + j(a)]];
+      return "M" + p.map(function (q) { return q[0].toFixed(1) + " " + q[1].toFixed(1); }).join(" L") + " Z";
+    }
+    for (var i = 0; i < 5; i++) {
+      var x = 4 + i * 29, y = 4, z = 22, a = 0.3 + i * i * 0.28, lit = i < stressLvl;
+      var g = document.createElementNS(NS, "g");
+      for (var k = 0; k < 1 + (i >= 2 ? 1 : 0) + (i >= 4 ? 1 : 0) + (i >= 3 ? 1 : 0); k++) {
+        var o = document.createElementNS(NS, "path");
+        o.setAttribute("d", quad(x, y, z, a + k * 0.5)); o.setAttribute("fill", "none");
+        o.setAttribute("stroke", "currentColor"); o.setAttribute("stroke-width", lit ? 1.6 : 1.2); o.setAttribute("stroke-linejoin", "round");
+        if (!lit) o.setAttribute("opacity", ".55");
+        g.appendChild(o);
+      }
+      if (lit) drawCross(g, i, x, y, z);
+      s.appendChild(g);
+    }
+  }
+  /* the cross used by the stress squares and the finished-mission boxes: tidy at index 0, scribbled and overshooting by index 4 */
+  function drawCross(g, i, x, y, z) {
+    var NS = "http://www.w3.org/2000/svg", xc = i < 2 ? "currentColor" : (crossLight ? ["", "", "#c24a38", "#d63a2a", "#ee3322"][i] : SQCOL[i]);
+    function j(a) { return (Math.random() - 0.5) * 2 * a; }
+    var ov = i * 1.6 * (z / 22), xa = (0.3 + i * i * 0.35) * (z / 22), strokes = 2 + (i >= 2 ? 2 : 0) + (i >= 4 ? 2 : 0), pad = 2 * (z / 22);
+    for (var m = 0; m < strokes; m++) {
+      var x0 = x + pad - ov * (m % 3 === 2 ? 1.5 : 0.6), y0 = y + pad - ov * 0.5, x1 = x + z - pad + ov, y1 = y + z - pad + ov * 0.7;
+      var d = m % 2 ? "M" + (x1 + j(xa)).toFixed(1) + " " + (y0 + j(xa)).toFixed(1) + " L" + (x0 + j(xa)).toFixed(1) + " " + (y1 + j(xa)).toFixed(1)
+                    : "M" + (x0 + j(xa)).toFixed(1) + " " + (y0 + j(xa)).toFixed(1) + " L" + (x1 + j(xa)).toFixed(1) + " " + (y1 + j(xa)).toFixed(1);
+      var xs = document.createElementNS(NS, "path"); xs.setAttribute("d", d); xs.setAttribute("fill", "none");
+      xs.style.stroke = xc; xs.style.strokeWidth = String((2 + i * 0.15) * (z > 22 ? 1.1 : 1)); xs.setAttribute("stroke-linecap", "round"); g.appendChild(xs);
+    }
+  }
+  function crossIdx() { var v = stressVal(); return v <= 0 ? 0 : Math.max(0, Math.min(5, Math.ceil(v / 20)) - 1); }
+  function drawBox(svg) {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var g = document.createElementNS("http://www.w3.org/2000/svg", "g"); svg.appendChild(g);
+    drawCross(g, crossIdx(), 2, 2, 24);
+  }
+  function drawBoxes() { var l = document.querySelectorAll(".item.done .box svg"); for (var q = 0; q < l.length; q++) drawBox(l[q]); }
+  /* every red in the page drifts towards dark red as stress rises (switch: Options > Errand life) */
+  function parseCol(s) {
+    s = (s || "").trim(); var m;
+    if ((m = s.match(/^#([0-9a-f]{3})$/i))) return m[1].split("").map(function (h) { return parseInt(h + h, 16); });
+    if ((m = s.match(/^#([0-9a-f]{6})$/i))) return [0, 2, 4].map(function (k) { return parseInt(m[1].substr(k, 2), 16); });
+    if ((m = s.match(/^rgba?\(([^)]+)\)/i))) return m[1].split(",").slice(0, 3).map(function (n) { return Math.round(parseFloat(n)); });
+    return null;
+  }
+  function tintReds() {
+    var b = document.body; b.style.removeProperty("--red");
+    b.classList.toggle("sr", !!opts.stressRed);
+    if (!opts.stressRed) return;
+    var v = stressVal(), t = Math.min(1, v / 100) * 0.85, base = parseCol(getComputedStyle(b).getPropertyValue("--red"));
+    if (!base || t <= 0) return;
+    var dark = [90, 8, 8];
+    b.style.setProperty("--red", "rgb(" + base.map(function (c, k) { return Math.round(c + (dark[k] - c) * t); }).join(",") + ")");
+  }
+  /* map counts as rubber stamps: double border, tilted a different amount per place, rough ink */
+  function stampHTML(open, all, k) {
+    if (!all) return "";
+    var h = 0, s = String(k), i; for (i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 97;
+    var rot = ((h % 13) - 6) * 1.4, wide = open > 9 ? 13 : 10, rnd = opts.stampRound;
+    return '<g class="stp" transform="rotate(' + rot.toFixed(1) + ')" filter="url(#stampInk)">' + (rnd ?
+      '<circle class="stpo" r="' + (open > 9 ? 12.5 : 11.5) + '"/><circle class="stpi" r="' + (open > 9 ? 9.8 : 8.8) + '"/>' :
+      '<rect class="stpo" x="' + -(wide + 1) + '" y="-11" width="' + (wide * 2 + 2) + '" height="22" rx="2.5"/>' +
+      '<rect class="stpi" x="' + -(wide - 1.5) + '" y="-8.5" width="' + (wide * 2 - 3) + '" height="17" rx="1.5"/>') +
+      (open ? '<text class="stpt" y="6.5">' + open + '</text>' : '<path class="stpx" d="M-5-4.5L5 4.5M5-4.5L-5 4.5"/>') + '</g>';
+  }
   function renderMeters() {
     var showS = opts.stress, showR = opts.rank;
     $("meters").hidden = !(showS || showR || !$("adBox").hidden);
     $("stressBox").hidden = !showS; $("rankBox").hidden = !showR;
     if (showS) {
       var sv = stressVal();
-      $("stressFill").style.width = sv + "%";
-      $("stressWord").textContent = sv < 25 ? "Calm" : sv < 50 ? "Tense" : sv < 75 ? "Rattled" : "Furious";
+      stressLvl = sv <= 0 ? 0 : Math.min(5, Math.ceil(sv / 20));
+      drawStress();
+      $("stressWord").hidden = stressLvl < 4;
+      $("stressSq").setAttribute("aria-label", "Stress " + stressLvl + " of 5" + (stressLvl >= 4 ? ". Good luck." : ""));
     }
     if (showR) {
       var rk = rankFor(stats.cash);
@@ -1183,7 +1458,7 @@ body.wob-all [data-wa] { border-color: transparent !important; }
   function renderWeek(mine) {
     var box = $("week"); box.hidden = !opts.week;
     if (!opts.week) { $("wrap").hidden = true; return; }
-    var days = weekDays(), t = todayKey(), el0 = $("days"); el0.innerHTML = "";
+    var days = weekDays(), t = todayKey(), el0 = $("days"), vw = $("views"); el0.innerHTML = ""; vw.innerHTML = "";
     var all = el("button", "daybtn", "All"); all.type = "button"; all.setAttribute("aria-pressed", dayFilter === null ? "true" : "false");
     all.addEventListener("click", function () { dayFilter = null; render(); });
     el0.appendChild(all);
@@ -1200,11 +1475,11 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     var w = el("button", "daybtn wrapbtn" + (fri ? " hot" : ""), "Wrap-up"); w.type = "button";
     w.setAttribute("aria-pressed", wrapOpen ? "true" : "false");
     w.addEventListener("click", function () { wrapOpen = !wrapOpen; render(); fx("click"); });
-    el0.appendChild(w);
-    var cb = el("button", "daybtn wrapbtn", "Month"); cb.type = "button"; cb.style.marginLeft = "0";
+    vw.appendChild(w);
+    var cb = el("button", "daybtn wrapbtn", "Month"); cb.type = "button"; 
     cb.setAttribute("aria-pressed", calOpen ? "true" : "false"); cb.setAttribute("aria-expanded", calOpen ? "true" : "false");
     cb.addEventListener("click", function () { calOpen = !calOpen; try { localStorage.setItem("mission-map-cal", calOpen ? "1" : "0"); } catch (e) {} render(); fx("click"); });
-    el0.appendChild(cb);
+    vw.appendChild(cb);
     renderWrap(days); renderCal(mine);
   }
   var MONTHN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -1295,6 +1570,7 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     $("count").textContent = mine.length ? done + " of " + mine.length + (evil ? " resisted" : " done") : (evil ? "Nothing to resist" : "No missions yet");
     document.body.dataset.view = view;
     document.body.classList.toggle("evil", evil);
+    tintReds();
     applyMedia();
     $("pinBtn").setAttribute("aria-pressed", evil ? "true" : "false");
     $("newText").placeholder = evil ? "Something you shouldn't do" : "New mission";
@@ -1302,7 +1578,7 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     $("day").textContent = dayName + (evil ? "" : "");
     var tb = document.querySelectorAll("#themeGrid .tbtn");
     for (var q = 0; q < tb.length; q++) tb[q].setAttribute("aria-pressed", tb[q].getAttribute("data-v") === view ? "true" : "false");
-    var showMap = view === "map" || opts.mapAll, grid = !!GRID[view];
+    var showMap = view === "map" || view === "mine" || opts.mapAll, grid = !!GRID[view];
     $("mapcard").hidden = !showMap;
     $("paper").hidden = grid;
     $("notesList").hidden = !grid;
@@ -1315,9 +1591,7 @@ body.wob-all [data-wa] { border-color: transparent !important; }
       var here = mine.filter(function (i) { return i.place === k; });
       var open = here.filter(function (i) { return !i.done; }).length;
       var b = g.querySelector(".badge");
-      if (!here.length) b.innerHTML = "";
-      else if (open) b.innerHTML = '<circle class="bdg" r="9"/><text class="bdgt" y="4.5">' + open + '</text>';
-      else b.innerHTML = '<circle class="bdgx" r="9"/><path class="bdgm" d="M-4-4L4 4M4-4L-4 4"/>';
+      b.innerHTML = stampHTML(open, here.length, k);
       g.classList.toggle("sel", filter === k);
       var fogged = opts.fog && !visited[k];
       g.classList.toggle("fogged", fogged);
@@ -1376,7 +1650,7 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     } else { rb.hidden = true; rb.removeAttribute("href"); }
     $("sample").hidden = !(!grid && items.some(function (i) { return i.sample; }));
 
-    renderMeters(); renderWeek(mine); renderRoad(); renderNext();
+    renderMeters(); renderWeek(mine); renderRoad(); renderNext(); renderPractice();
     if ($("options") && !$("options").hidden) renderAch();
 
     if (lastToggled) {
@@ -1530,7 +1804,17 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     e.preventDefault();
     add($("newText").value, $("newPlace").value, $("newWhere").value, $("newBring").value);
     $("newText").value = ""; $("newWhere").value = ""; $("newBring").value = "";
+    addSheet(false);
   });
+  function addSheet(on) {
+    $("addForm").hidden = !on; $("scrim").hidden = !on; $("fab").setAttribute("aria-expanded", String(on));
+    $("fab").textContent = on ? "Close" : "Add";
+    if (on) { try { $("newText").focus(); } catch (e) {} } else { try { $("fab").focus({ preventScroll: true }); } catch (e) {} }
+  }
+  $("fab").addEventListener("click", function () { addSheet($("addForm").hidden); fx("click"); });
+  $("addClose").addEventListener("click", function () { addSheet(false); });
+  $("scrim").addEventListener("click", function () { addSheet(false); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("addForm").hidden) addSheet(false); });
   $("pinBtn").addEventListener("click", flipEvil);
   $("clearSamples").addEventListener("click", function () { items = items.filter(function (i) { return !i.sample; }); render(); persist(); });
   function toggleFilter(k) { filter = filter === k ? null : k; render(); }
@@ -1802,17 +2086,34 @@ body.wob-all [data-wa] { border-color: transparent !important; }
   /* ---------- options menu ---------- */
   var opts = { scribble: false, wobble: true, strike: true, tilt: true, reduce: false, doneBottom: false, tags: true, mode: "auto",
     print: true, week: true, hassles: true, stress: true, bring: false, rank: true, race: true, road: false, station: "auto", ads: true,
-    fog: true, moving: false, mapAll: false, wobAll: true };
+    fog: true, moving: false, mapAll: false, wobAll: true, stressRed: true, stampRound: true, practiceOn: true, aodIdle: "0", aodLevel: "10", fontAll: "", fontMission: "" };
   var modeTouched = false;
   try {
     var ov = JSON.parse(localStorage.getItem("mission-map-opts") || "null");
     if (ov) Object.keys(opts).forEach(function (k) { if (typeof ov[k] === typeof opts[k]) opts[k] = ov[k]; });
     if (!MUS[opts.station] && opts.station !== "auto") opts.station = "auto";
   } catch (e) {}
+  var FONTS = [["", "Theme"], ["smash", "Smash", '"Smash"'], ["caveat", "Caveat (handwriting)", '"Caveat"'], ["typewriter", "Special Elite (typewriter)", '"Special Elite"'],
+    ["marker", "Permanent Marker", '"Permanent Marker"'], ["anton", "Anton", '"Anton"'], ["bangers", "Bangers", '"Bangers"'], ["comic", "Comic Neue", '"Comic Neue"'],
+    ["playfair", "Playfair Display", '"Playfair Display"'], ["rye", "Rye", '"Rye"'], ["techmono", "Share Tech Mono", '"Share Tech Mono"'], ["vt", "VT323", '"VT323"'],
+    ["pixel", "Press Start 2P", '"Press Start 2P"'], ["sans", "Plain sans-serif", 'system-ui, "Segoe UI", Roboto, sans-serif']];
+  function fontCss(id) { for (var i = 0; i < FONTS.length; i++) if (FONTS[i][0] === id && FONTS[i][2]) return FONTS[i][2] + ", var(--font-type), sans-serif"; return ""; }
+  function applyFonts() {
+    var b = document.body, a = fontCss(opts.fontAll), m = fontCss(opts.fontMission);
+    if (a) b.style.setProperty("--fo-all", a); else b.style.removeProperty("--fo-all");
+    if (m) b.style.setProperty("--fo-m", m); else b.style.removeProperty("--fo-m");
+    b.classList.toggle("fo-all", !!a); b.classList.toggle("fo-m", !!m);
+  }
+  (function fillFonts() {
+    ["fontAll", "fontMission"].forEach(function (id) {
+      var s = $(id); FONTS.forEach(function (f) { var o = document.createElement("option"); o.value = f[0]; o.textContent = f[1]; s.appendChild(o); });
+      s.addEventListener("change", function () { opts[id] = this.value; saveOpts(); applyFonts(); });
+    });
+  })();
   function saveOpts() { try { localStorage.setItem("mission-map-opts", JSON.stringify(opts)); } catch (e) {} }
   var BOXES = [["scrOn", "scribble"], ["wobOn", "wobble"], ["strOn", "strike"], ["tiltOn", "tilt"], ["calmOn", "reduce"], ["botOn", "doneBottom"], ["tagOn", "tags"],
     ["prtOn", "print"], ["weekOn", "week"], ["hasOn", "hassles"], ["strsOn", "stress"], ["brOn", "bring"], ["rankOn", "rank"], ["raceOn", "race"],
-    ["roadOn", "road"], ["adsOn", "ads"], ["fogOn", "fog"], ["movOn", "moving"], ["mapAllOn", "mapAll"], ["wobAllOn", "wobAll"]];
+    ["roadOn", "road"], ["adsOn", "ads"], ["fogOn", "fog"], ["movOn", "moving"], ["mapAllOn", "mapAll"], ["wobAllOn", "wobAll"], ["srOn", "stressRed"], ["stRoundOn", "stampRound"], ["prOn", "practiceOn"]];
   function applyOpts() {
     var c = document.body.classList;
     c.toggle("wob", opts.wobble); if (opts.wobble) { startWob(); wobTick(); } else stopWob();
@@ -1820,12 +2121,12 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     var de = document.documentElement;
     if (opts.mode === "auto") { if (modeTouched) de.removeAttribute("data-theme"); } else de.setAttribute("data-theme", opts.mode);
     [["cmAuto", "auto"], ["cmLight", "light"], ["cmDark", "dark"]].forEach(function (p) { $(p[0]).setAttribute("aria-pressed", opts.mode === p[1]); });
-    buildTraffic(); updateSky();
+    applyFonts(); buildTraffic(); updateSky();
   }
   function syncOpts() {
     $("sfxOn").checked = snd.sfx; $("musOn").checked = snd.music; $("vol").value = Math.round(snd.vol * 100);
     BOXES.forEach(function (b) { $(b[0]).checked = !!opts[b[1]]; });
-    $("station").value = opts.station;
+    $("station").value = opts.station; $("aodIdle").value = opts.aodIdle; $("aodLevel").value = opts.aodLevel; $("fontAll").value = opts.fontAll; $("fontMission").value = opts.fontMission;
     renderAch();
   }
   BOXES.forEach(function (b) {
@@ -1861,9 +2162,15 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     ];
     return "M" + p.map(function (q) { return q[0].toFixed(1) + " " + q[1].toFixed(1); }).join(" L");
   }
-  var WA_SEL = ".seg,.sug,.suggest,.mapcard,.paper,.note,.box,.tbtn,.rankbox,.stress .meter,.daybtn,.lane,.toast,.mapbar,.pinform,.pinform input,.dash,.thumb,.pic,.cal,.calday,.opts details,.opts select,.add input,.add select,.suggest textarea,.stamp,.go,.pinbtn,.evform,.evform input,.evform select,.evform textarea";
+  var WA_SEL = ".practice,.practice select,.practice .btn,.seg,.sug,.suggest,.mapcard,.paper,.note,.box,.tbtn,.rankbox,.stress .meter,.daybtn,.lane,.toast,.mapbar,.pinform,.pinform input,.dash,.thumb,.pic,.cal,.calday,.opts details,.opts select,.add input,.add select,.suggest textarea,.stamp,.go,.pinbtn,.evform,.evform input,.evform select,.evform textarea";
   var waSvg = null, waTick = 0;
   function waOn() { return opts.wobble && opts.wobAll; }
+  function inClosedDetails(e) {
+    for (var d = e.parentElement; d; d = d.parentElement) {
+      if (d.tagName === "DETAILS" && !d.open) { var s = d.firstElementChild; if (!(s && s.tagName === "SUMMARY" && s.contains(e))) return true; }
+    }
+    return false;
+  }
   function wobAllTick() {
     if (!waOn()) { wobAllOff(); return; }
     var b = document.body, still = isReduced();
@@ -1873,9 +2180,9 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     waSvg.style.width = Math.max(de.scrollWidth, window.innerWidth) + "px"; waSvg.style.height = Math.max(de.scrollHeight, window.innerHeight) + "px";
     /* read the real border colours with the hiding switched off, then switch it back on before anything paints */
     b.classList.remove("wob-all");
-    var els = document.querySelectorAll(WA_SEL), sx = window.pageXOffset, sy = window.pageYOffset, info = [], i;
+    var sheet = $("addForm"), sheetOn = sheet && !sheet.hidden, els = document.querySelectorAll(WA_SEL), sx = window.pageXOffset, sy = window.pageYOffset, info = [], i;
     for (i = 0; i < els.length; i++) {
-      var e0 = els[i], w = e0.offsetWidth, h = e0.offsetHeight; if (!w || !h) { e0.removeAttribute("data-wa"); continue; }
+      var e0 = els[i], w = e0.offsetWidth, h = e0.offsetHeight; if (!w || !h || inClosedDetails(e0) || (sheetOn && !sheet.contains(e0))) { e0.removeAttribute("data-wa"); continue; }
       var cs = getComputedStyle(e0), bw = [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].map(parseFloat);
       var col = cs.borderTopColor;
       if (!(bw[0] >= 1 && bw[1] >= 1 && bw[2] >= 1 && bw[3] >= 1) || cs.borderTopStyle === "none" || /rgba\(.*,\s*0\)$/.test(col) || col === "transparent" || cs.visibility === "hidden") { e0.removeAttribute("data-wa"); continue; }
@@ -1905,6 +2212,7 @@ body.wob-all [data-wa] { border-color: transparent !important; }
   function wobTick() {
     if (!opts.wobble || document.hidden) return;
     wobAllTick();
+    if (!isReduced()) { if (!$("stressBox").hidden) drawStress(); drawBoxes(); }
     var still = isReduced(), els = document.querySelectorAll(".btn, .chip");
     for (var i = 0; i < els.length; i++) {
       var e0 = els[i], w = e0.offsetWidth, h = e0.offsetHeight; if (!w || !h) continue;
@@ -2307,6 +2615,84 @@ body.wob-all [data-wa] { border-color: transparent !important; }
     reminderStatus(); schedulePhone();
     if (phone.calOn) loadCals().then(phoneSync).catch(function (e) { pMsg("Calendar: " + errText(e)); });
   }
+
+  /* music stops when the app goes to the background or the screen turns off, and carries on when you come back */
+  var musHeld = false;
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+      if (!snd.music || !AC) return;
+      musHeld = true;
+      try { if (mus.el) mus.el.pause(); } catch (e) {}
+      try { if (AC.state === "running") AC.suspend(); } catch (e) {}
+    } else if (musHeld) {
+      musHeld = false;
+      try { if (AC) AC.resume(); } catch (e) {}
+      try { if (mus.el && snd.music) { var pr = mus.el.play(); if (pr && pr.catch) pr.catch(function () {}); } } catch (e) {}
+    }
+  });
+
+  /* ---------- ambient screen: a dark always-on view (clock, next event, open missions, stress) ---------- */
+  var aodOn = false, aodLast = Date.now(), aodWL = null, aodSaved = null, aodShift = 0, aodOpened = 0;
+  function plug(n) { try { return NATIVE ? Capacitor.registerPlugin(n) : null; } catch (e) { return null; } }
+  function aodNextEvent() {
+    var now = new Date(), hm = pad(now.getHours()) + ":" + pad(now.getMinutes());
+    for (var off = 0; off < 15; off++) {
+      var k = dkey(new Date(now.getFullYear(), now.getMonth(), now.getDate() + off));
+      var cand = eventsOn(k).filter(function (e) { if (off > 0) return e.date === k || e.allDay; return e.allDay || !e.start || (e.end || e.start) >= hm || e.date !== k; });
+      if (cand.length) { var e = cand[0]; return (off === 0 ? "Today" : off === 1 ? "Tomorrow" : dateLabel(k)) + (e.allDay || !e.start ? "" : " " + e.start) + "  " + e.title; }
+    }
+    return "";
+  }
+  function aodDraw() {
+    var n = new Date();
+    $("aodTime").textContent = pad(n.getHours()) + ":" + pad(n.getMinutes());
+    $("aodDate").textContent = n.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
+    var nx = aodNextEvent(); $("aodNext").textContent = nx ? "Next: " + nx : ""; $("aodNext").hidden = !nx;
+    var open = items.filter(function (i) { return !i.done; }), ul = $("aodList"); ul.innerHTML = "";
+    open.slice(0, 5).forEach(function (i) { var li = document.createElement("li"); li.textContent = i.text; ul.appendChild(li); });
+    if (open.length > 5) { var m = document.createElement("li"); m.className = "more"; m.textContent = "+" + (open.length - 5) + " more"; ul.appendChild(m); }
+    if (!open.length) { var z = document.createElement("li"); z.className = "more"; z.textContent = "Nothing left to do"; ul.appendChild(z); }
+    stressLvl = stressVal() <= 0 ? 0 : Math.min(5, Math.ceil(stressVal() / 20)); drawStress($("aodSq"), true);
+    var pi = prPinned(), pn = $("aodPin"); pn.hidden = !(opts.practiceOn && pi >= 0);
+    if (!pn.hidden) pn.textContent = "Remember: " + PRACTICE[pi][1];
+    /* drift a few pixels every minute so nothing burns into an OLED screen */
+    aodShift = (aodShift + 1) % 6; var dx = [0, 14, -12, 8, -16, 10][aodShift], dy = [0, -10, 12, -14, 6, -8][aodShift];
+    $("aodIn").style.transform = "translate(" + dx + "px," + dy + "px)";
+  }
+  function aodAwake(on) {
+    var ka = plug("KeepAwake");
+    try { if (on) { if (ka) ka.keepAwake(); } else if (ka) ka.allowSleep(); } catch (e) {}
+    try {
+      if (on && navigator.wakeLock && !aodWL) navigator.wakeLock.request("screen").then(function (l) { aodWL = l; l.addEventListener("release", function () { aodWL = null; }); }).catch(function () {});
+      if (!on && aodWL) { aodWL.release(); aodWL = null; }
+    } catch (e) {}
+  }
+  function aodBright(on) {
+    var sb = plug("ScreenBrightness"); if (!sb) return;
+    try { if (on) sb.setBrightness({ brightness: Math.max(0.01, (parseInt(opts.aodLevel, 10) || 10) / 100) }); else sb.setBrightness({ brightness: -1 }); } catch (e) {}
+  }
+  function aodOpen() {
+    if (aodOn) return; aodOn = true; aodOpened = Date.now();
+    var a = $("aod"); a.hidden = false; aodDraw(); aodAwake(true); aodBright(true);
+    try { if (a.requestFullscreen) a.requestFullscreen().catch(function () {}); } catch (e) {}
+    try { if (snd.music) musicRefresh(); } catch (e) {}
+  }
+  function aodClose() {
+    if (!aodOn) return; aodOn = false; $("aod").hidden = true; aodAwake(false); aodBright(false); aodLast = Date.now();
+    try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) {}
+    render();
+  }
+  $("aodBtn").addEventListener("click", function () { aodOpen(); });
+  $("aod").addEventListener("click", function () { if (Date.now() - aodOpened > 500) aodClose(); });
+  document.addEventListener("keydown", function (e) { if (aodOn && (e.key === "Escape" || e.key === " " || e.key === "Enter")) aodClose(); });
+  ["pointerdown", "keydown", "scroll", "touchstart"].forEach(function (ev) { document.addEventListener(ev, function () { aodLast = Date.now(); }, { passive: true, capture: true }); });
+  ["aodIdle", "aodLevel"].forEach(function (id) { $(id).addEventListener("change", function () { opts[id] = this.value; saveOpts(); if (aodOn) aodBright(true); }); });
+  setInterval(function () {
+    if (aodOn) { aodDraw(); return; }
+    var mins = parseInt(opts.aodIdle, 10) || 0;
+    if (mins && !document.hidden && Date.now() - aodLast > mins * 60000) aodOpen();
+  }, 30000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && aodOn) { aodAwake(true); aodDraw(); } });
 
   /* ---------- media: your own pictures and sounds, kept on this device ---------- */
   var MKEY = "mission-map-media";
